@@ -8,6 +8,7 @@ import { Slider } from "@/components/ui/slider"
 import { MapPin, Volume2, Settings, Globe } from 'lucide-react'
 import { useDialect } from "@/hooks/use-dialect"
 import { useI18n } from "./i18n-provider"
+import { DialectDiagnostics } from "@/components/dialect-diagnostics"
 
 export function DialectSelector() {
   const {
@@ -155,6 +156,9 @@ export function DialectSelector() {
           </p>
         </CardContent>
       </Card>
+
+      {/* Diagnostics panel for troubleshooting */}
+      <DialectDiagnostics />
     </div>
   )
 }

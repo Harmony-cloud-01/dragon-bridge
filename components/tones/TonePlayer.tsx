@@ -11,6 +11,11 @@ export function TonePlayer({ text, dialectCode = "zh-CN" }: { text: string; dial
   const [activeIndex, setActiveIndex] = useState(-1)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [toneCount, setToneCount] = useState<number>(0)
+  const timersRef = useRef<number[]>([])
+  const clearTimers = () => {
+    timersRef.current.forEach((id) => window.clearTimeout(id))
+    timersRef.current = []
+  }
 
   useEffect(() => {
     if (currentlyPlaying === text) {
@@ -33,9 +38,24 @@ export function TonePlayer({ text, dialectCode = "zh-CN" }: { text: string; dial
       if (ev.detail.text !== text) return
       const arr = Array.isArray(ev.detail.analysis) ? ev.detail.analysis : []
       setToneCount(arr.length)
+      // schedule highlighting based on startTime/endTime (seconds)
+      clearTimers()
+      arr.forEach((seg: any, idx: number) => {
+        const t = Math.max(0, Number(seg.startTime) || idx * 0.5)
+        const id = window.setTimeout(() => setActiveIndex(idx), Math.floor(t * 1000))
+        timersRef.current.push(id)
+      })
+      const lastEnd = arr.length ? (Number(arr[arr.length - 1].endTime) || arr.length * 0.5) : 0
+      if (lastEnd > 0) {
+        const id = window.setTimeout(() => setActiveIndex(-1), Math.floor(lastEnd * 1000) + 200)
+        timersRef.current.push(id)
+      }
     }
     window.addEventListener("tone:analysis", handler as any)
-    return () => window.removeEventListener("tone:analysis", handler as any)
+    return () => {
+      window.removeEventListener("tone:analysis", handler as any)
+      clearTimers()
+    }
   }, [text])
 
   const handlePlay = async () => {
