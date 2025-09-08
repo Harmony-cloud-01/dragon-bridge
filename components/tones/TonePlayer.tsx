@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react"
 import { analyzeAudioFromElement } from "@/lib/tones"
 import { ToneVisualizer } from "@/components/tones/ToneVisualizer"
 import { Button } from "@/components/ui/button"
+import { Switch } from "@/components/ui/switch"
+import { getPreferLocalAudio, setPreferLocalAudio } from "@/stores/settings"
 import { useDialect } from "@/hooks/use-dialect"
 import { Play, Waves, Loader2 } from "lucide-react"
 
@@ -17,6 +19,11 @@ export function TonePlayer({ text, dialectCode = "zh-CN" }: { text: string; dial
     timersRef.current.forEach((id) => window.clearTimeout(id))
     timersRef.current = []
   }
+  const [preferLocal, setPreferLocal] = useState(false)
+
+  useEffect(() => {
+    setPreferLocal(getPreferLocalAudio())
+  }, [])
 
   useEffect(() => {
     if (currentlyPlaying === text) {
@@ -83,6 +90,14 @@ export function TonePlayer({ text, dialectCode = "zh-CN" }: { text: string; dial
 
   return (
     <div className="space-y-4 p-4 border rounded-lg">
+      <div className="flex items-center justify-end gap-2 text-sm">
+        <span>Prefer pre-recorded audio</span>
+        <Switch
+          checked={preferLocal}
+          onCheckedChange={(v) => { setPreferLocal(v); setPreferLocalAudio(v) }}
+          aria-label="Prefer pre-recorded audio"
+        />
+      </div>
       <ToneVisualizer text={text} activeIndex={activeIndex} />
       {toneCount > 0 && (
         <p className="text-center text-xs text-stone-500">Analyzed {toneCount} segments</p>

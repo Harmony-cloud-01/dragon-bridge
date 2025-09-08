@@ -54,6 +54,48 @@ function autocorrelate(buf: Float32Array, sampleRate: number): number {
   return sampleRate / maxpos
 }
 
+// --- Basic Pinyin utilities ---
+
+const TONE_MARKS: Record<string, [string, number]> = {
+  // a
+  "ā": ["a", 1], "á": ["a", 2], "ǎ": ["a", 3], "à": ["a", 4],
+  // e
+  "ē": ["e", 1], "é": ["e", 2], "ě": ["e", 3], "è": ["e", 4],
+  // i
+  "ī": ["i", 1], "í": ["i", 2], "ǐ": ["i", 3], "ì": ["i", 4],
+  // o
+  "ō": ["o", 1], "ó": ["o", 2], "ǒ": ["o", 3], "ò": ["o", 4],
+  // u
+  "ū": ["u", 1], "ú": ["u", 2], "ǔ": ["u", 3], "ù": ["u", 4],
+  // ü
+  "ǖ": ["ü", 1], "ǘ": ["ü", 2], "ǚ": ["ü", 3], "ǜ": ["ü", 4],
+}
+
+export function toneNumberFromPinyin(syllable: string): number {
+  // Returns 1..4 when diacritic found, else 5 (neutral)
+  for (const ch of syllable) {
+    const m = TONE_MARKS[ch]
+    if (m) return m[1]
+  }
+  // Also support numeric tone (ma1, ma2...)
+  const mnum = syllable.match(/\d/)
+  if (mnum) {
+    const n = Number(mnum[0])
+    if (n >= 1 && n <= 4) return n
+    return 5
+  }
+  return 5
+}
+
+export function splitPinyin(pinyin: string): string[] {
+  // naive split by spaces; callers can provide per-character if available
+  return pinyin
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+}
+
+
 export async function analyzeAudioFromElement(el: HTMLMediaElement, text: string): Promise<ToneAnalysis[]> {
   const AudioCtx = (window.AudioContext || (window as any).webkitAudioContext)
   const ctx: AudioContext = new AudioCtx()
@@ -65,6 +107,7 @@ export async function analyzeAudioFromElement(el: HTMLMediaElement, text: string
 
   const buf = new Float32Array(analyser.fftSize)
   const contours: number[] = []
+  const energies: number[] = []
 
   let stopped = false
   const onEnd = () => { stopped = true }
@@ -74,6 +117,11 @@ export async function analyzeAudioFromElement(el: HTMLMediaElement, text: string
   const start = ctx.currentTime
   while (!stopped && (ctx.currentTime - start) < 10) {
     analyser.getFloatTimeDomainData(buf)
+    // energy
+    let energy = 0
+    for (let i = 0; i < buf.length; i++) energy += buf[i] * buf[i]
+    energy = energy / buf.length
+    energies.push(energy)
     const f = autocorrelate(buf, ctx.sampleRate)
     const hz = f > 0 ? f : 0
     contours.push(hz)
@@ -82,17 +130,34 @@ export async function analyzeAudioFromElement(el: HTMLMediaElement, text: string
 
   try { source.disconnect(); analyser.disconnect(); ctx.close() } catch {}
 
-  // Split evenly per character for now (no alignment available)
+  // Heuristic segmentation based on energy valleys
   const chars = text.split("")
-  const total = contours.length
-  const perSeg = Math.max(1, Math.floor(total / Math.max(1, chars.length)))
+  const n = contours.length
+  const winMs = 100
+  // smooth energy
+  const smooth: number[] = energies.map((e, i, arr) => (e + (arr[i - 1] || e) + (arr[i + 1] || e)) / 3)
+  const thresh = smooth.reduce((a, b) => a + b, 0) / Math.max(1, smooth.length) * 0.6
+  const boundaries: number[] = [0]
+  for (let i = 1; i < smooth.length - 1; i++) {
+    if (smooth[i] < thresh && smooth[i - 1] >= thresh && boundaries.length < chars.length) {
+      boundaries.push(i)
+    }
+  }
+  if (boundaries.length < chars.length) {
+    // pad evenly
+    const step = Math.floor(n / chars.length)
+    while (boundaries.length < chars.length) boundaries.push(boundaries[boundaries.length - 1] + step)
+  }
+  boundaries.push(n)
+
   const out: ToneAnalysis[] = []
   for (let i = 0; i < chars.length; i++) {
-    const seg = contours.slice(i * perSeg, (i + 1) * perSeg)
-    const startTime = i * 0.5
-    const endTime = (i + 1) * 0.5
+    const i0 = Math.max(0, Math.min(n, boundaries[i]))
+    const i1 = Math.max(i0 + 1, Math.min(n, boundaries[i + 1]))
+    const seg = contours.slice(i0, i1)
+    const startTime = (i0 * winMs) / 1000
+    const endTime = (i1 * winMs) / 1000
     out.push({ char: chars[i], pinyin: chars[i], tone: 5, startTime, endTime, pitchContour: seg })
   }
   return out
 }
-
