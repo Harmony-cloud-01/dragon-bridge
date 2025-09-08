@@ -40,9 +40,9 @@ export function SrsViewer() {
                     <td className="py-1 pr-2">{dt(it.due)}</td>
                     <td className="py-1 pr-2">
                       <div className="flex gap-1">
-                        <Button size="xs" variant="outline" onClick={() => gradeItem(it.key, 'again')}>again</Button>
-                        <Button size="xs" variant="outline" onClick={() => gradeItem(it.key, 'good')}>good</Button>
-                        <Button size="xs" variant="destructive" onClick={() => removeItem(it.key)}>remove</Button>
+                        <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => gradeItem(it.key, 'again')}>again</Button>
+                        <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => gradeItem(it.key, 'good')}>good</Button>
+                        <Button size="sm" variant="destructive" className="h-7 px-2 text-xs" onClick={() => removeItem(it.key)}>remove</Button>
                       </div>
                     </td>
                   </tr>
@@ -55,4 +55,3 @@ export function SrsViewer() {
     </Card>
   )
 }
-
