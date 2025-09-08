@@ -1,4 +1,4 @@
-const CACHE_NAME = "dragon-bridge-pwa-v1"
+const CACHE_NAME = "dragon-bridge-pwa-v2"
 const OFFLINE_URL = "./offline"
 const PRECACHE = [
   "./",
