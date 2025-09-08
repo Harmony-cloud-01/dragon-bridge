@@ -36,7 +36,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
         
-      - name: Build static export (Next.js output: export)
+      - name: Build static export (Next.js output export)
         run: pnpm run build
         
       - name: Setup Pages
