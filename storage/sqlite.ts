@@ -59,9 +59,12 @@ export async function makeSQLiteEngine(): Promise<StorageEngine | null> {
         profileId ? [profileId] : []
       )
       const rows: any[] = res?.values || []
-      return rows.map((r) => {
-        try { return JSON.parse(r.payload) as ActivityEvent } catch { return null }
-      }).filter(Boolean)
+      const events = rows
+        .map((r): ActivityEvent | null => {
+          try { return JSON.parse(r.payload) as ActivityEvent } catch { return null }
+        })
+        .filter((e): e is ActivityEvent => !!e)
+      return events
     },
     async clearEvents(profileId?: string | null) {
       const conn = await ensureDb()
@@ -70,4 +73,3 @@ export async function makeSQLiteEngine(): Promise<StorageEngine | null> {
     },
   }
 }
-
