@@ -25,12 +25,24 @@ export function AiTeacher() {
     // Try Ollama first; fall back to local suggestion if unavailable
     try {
       setLoading(true)
+      // Pull current lesson context if available
+      let context = ""
+      try {
+        const raw = localStorage.getItem("lessons.current")
+        if (raw) {
+          const l = JSON.parse(raw)
+          if (l && Array.isArray(l.words)) {
+            const words = l.words.slice(0, 12).map((w:any)=>w.text).join("、")
+            context = `\nContext lesson: ${l.title} (words: ${words})\n`
+          }
+        }
+      } catch {}
       const res = await fetch(`${endpoint.replace(/\/$/, "")}/api/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           model,
-          prompt: `Act as a Mandarin teacher for rural learners. Reply simply. Student said: ${user.text}`,
+          prompt: `Act as a Mandarin teacher for rural learners. Reply simply.${context}Student said: ${user.text}`,
           stream: true,
         }),
       })

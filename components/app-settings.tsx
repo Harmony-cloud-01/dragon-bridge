@@ -116,6 +116,21 @@ export function AppSettings() {
             </div>
             <Button size="sm" variant="outline" onClick={() => { clearLessonCache() }}>Clear</Button>
           </div>
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="font-medium">Use default lesson library</div>
+              <div className="text-stone-600">Loads the library from the project repository into local override.</div>
+            </div>
+            <Button size="sm" onClick={() => {
+              const url = (process.env.NEXT_PUBLIC_LESSONS_URL) || "https://raw.githubusercontent.com/Harmony-cloud-01/dragon-bridge/main/public/lessons.library.json";
+              fetch(url).then(r=>r.json()).then(json=>{
+                if (Array.isArray(json)) {
+                  localStorage.setItem("lessons.library.override", JSON.stringify(json));
+                  clearLessonCache();
+                }
+              }).catch(()=>{});
+            }}>Load default</Button>
+          </div>
         </CardContent>
       </Card>
 

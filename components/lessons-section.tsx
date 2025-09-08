@@ -102,7 +102,10 @@ export function LessonsSection({ onPracticeTone }: { onPracticeTone?: (example: 
               <LessonCard
                 key={lesson.id}
                 lesson={lesson}
-                onPractice={(l) => onPracticeTone?.(l.words[0]?.text || "你好")}
+                onPractice={(l) => {
+                  try { localStorage.setItem("lessons.current", JSON.stringify(l)) } catch {}
+                  onPracticeTone?.(l.words[0]?.text || "你好")
+                }}
               />
             ))}
           </div>
