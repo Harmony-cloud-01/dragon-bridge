@@ -8,9 +8,16 @@
     "start": "next start",
     "lint": "next lint",
     "export": "next build",
-    "lessons:build": "node scripts/generate_lessons.mjs"
+    "lessons:build": "node scripts/generate_lessons.mjs",
+    "cap:init": "cap init 'Dragon Bridge' 'org.harmony.dragonbridge' -y",
+    "cap:add:android": "cap add android",
+    "cap:copy": "cap copy",
+    "cap:sync": "cap sync",
+    "cap:open:android": "cap open android",
+    "cap:build:android": "cap build android"
   },
   "dependencies": {
+    "@capacitor/core": "^6.1.0",
     "@hookform/resolvers": "^3.10.0",
     "@radix-ui/react-accordion": "1.2.2",
     "@radix-ui/react-alert-dialog": "1.1.4",
@@ -64,6 +71,7 @@
     "zod": "3.25.67"
   },
   "devDependencies": {
+    "@capacitor/cli": "^6.1.0",
     "@tailwindcss/postcss": "^4.1.9",
     "@types/node": "^22",
     "@types/react": "^19",
