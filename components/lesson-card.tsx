@@ -3,6 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
+import { cn } from "@/lib/utils"
 import { useSrs } from "@/hooks/use-srs"
 
 export type Lesson = {
@@ -15,18 +16,44 @@ export type Lesson = {
 }
 
 export function LessonCard({ lesson, onPractice }: { lesson: Lesson; onPractice?: (l: Lesson) => void }) {
-  const { addItem } = useSrs()
+  const { addItem, items } = useSrs()
   const { toast } = useToast()
+  const [selected, setSelected] = useState<Set<number>>(new Set())
+  const total = lesson.words.length
+  const inSrs = lesson.words.reduce((acc, w) => acc + (items[`word:${w.text}`] ? 1 : 0), 0)
   const addAll = () => {
     lesson.words.forEach((w) => addItem(w.text, "word"))
     toast({ title: "Added to SRS", description: `Queued ${lesson.words.length} items.` })
+  }
+  const addSelected = () => {
+    const count = Array.from(selected).reduce((acc, i) => {
+      const w = lesson.words[i]
+      if (w) { addItem(w.text, "word"); return acc + 1 }
+      return acc
+    }, 0)
+    toast({ title: "Added selected", description: `Queued ${count} items.` })
+  }
+  const toggle = (i: number) => {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(i)) next.delete(i); else next.add(i)
+      return next
+    })
+  }
+  const practiceAll = () => {
+    try {
+      localStorage.setItem("lessons.current", JSON.stringify(lesson))
+      localStorage.setItem("tone.practice.queue", JSON.stringify(lesson.words.map((w) => w.text)))
+      localStorage.setItem("tone.practice.text", lesson.words[0]?.text || "你好")
+    } catch {}
+    onPractice?.(lesson)
   }
   return (
     <Card className="h-full">
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <span>{lesson.title}</span>
-          <span className="text-xs text-stone-500">{lesson.difficulty}</span>
+          <span className="text-xs text-stone-500">{lesson.difficulty} • in SRS {inSrs}/{total}</span>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -38,17 +65,30 @@ export function LessonCard({ lesson, onPractice }: { lesson: Lesson; onPractice?
           </div>
         )}
         <div className="flex flex-wrap gap-2">
-          {lesson.words.slice(0, 12).map((w, i) => (
-            <span key={i} className="px-2 py-1 bg-stone-100 rounded text-sm">
+          {lesson.words.slice(0, 24).map((w, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => toggle(i)}
+              className={cn(
+                "px-2 py-1 rounded text-sm border",
+                selected.has(i) ? "bg-emerald-100 border-emerald-300" : "bg-stone-100 border-stone-200"
+              )}
+              aria-pressed={selected.has(i)}
+            >
               {w.text}
-            </span>
+            </button>
           ))}
           {lesson.words.length > 12 && <span className="text-xs text-stone-500">+{lesson.words.length - 12} more</span>}
         </div>
         <div className="flex gap-2">
           <Button size="sm" onClick={addAll}>Add all to SRS</Button>
+          <Button size="sm" variant="outline" onClick={addSelected} disabled={selected.size === 0}>Add selected</Button>
           {onPractice && (
-            <Button size="sm" variant="outline" onClick={() => onPractice(lesson)}>Practice</Button>
+            <>
+              <Button size="sm" variant="outline" onClick={() => onPractice(lesson)}>Practice</Button>
+              <Button size="sm" variant="ghost" onClick={practiceAll}>Practice all</Button>
+            </>
           )}
         </div>
       </CardContent>

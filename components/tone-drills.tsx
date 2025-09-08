@@ -29,6 +29,8 @@ export function ToneDrills() {
   const [score, setScore] = useState({ correct: 0, total: 0 })
   const [consent, setConsentState] = useState<boolean>(false)
   const [externalText, setExternalText] = useState<string | null>(null)
+  const [queue, setQueue] = useState<string[] | null>(null)
+  const queueTimerRef = useRef<number | null>(null)
 
   // Mic visualization (energy bar)
   const [micActive, setMicActive] = useState(false)
@@ -44,10 +46,13 @@ export function ToneDrills() {
     try {
       const ex = localStorage.getItem("tone.practice.text")
       setExternalText(ex || null)
+      const q = localStorage.getItem("tone.practice.queue")
+      setQueue(q ? JSON.parse(q) : null)
     } catch {}
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current)
       if (audioCtxRef.current) audioCtxRef.current.close().catch(() => {})
+      if (queueTimerRef.current) window.clearTimeout(queueTimerRef.current)
     }
   }, [])
 
@@ -137,6 +142,33 @@ export function ToneDrills() {
     render()
   }
 
+  const clearQueue = () => {
+    setQueue(null)
+    try { localStorage.removeItem("tone.practice.queue") } catch {}
+    if (queueTimerRef.current) window.clearTimeout(queueTimerRef.current)
+  }
+
+  const runQueue = (visualize: boolean) => {
+    if (!queue || queue.length === 0) return
+    let i = 0
+    const step = async () => {
+      const word = queue![i]
+      try {
+        if (visualize) await playWithToneDisplay(word)
+        else await playPronunciation(word)
+      } catch {}
+      i += 1
+      if (i < queue!.length) {
+        // schedule next with a fixed delay (2.2s)
+        queueTimerRef.current = window.setTimeout(step, 2200)
+      } else {
+        // done
+        queueTimerRef.current = null
+      }
+    }
+    step()
+  }
+
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -161,6 +193,18 @@ export function ToneDrills() {
                 <div className="flex gap-2">
                   <Button size="sm" onClick={() => playPronunciation(externalText)} disabled={isPlaying}>Play</Button>
                   <Button size="sm" variant="outline" onClick={() => playWithToneDisplay(externalText)} disabled={isPlaying}>Play + Visualize</Button>
+                </div>
+              </div>
+            </div>
+          )}
+          {queue && queue.length > 0 && (
+            <div className="rounded border p-3 bg-emerald-50">
+              <div className="flex items-center justify-between">
+                <div className="text-sm">Set: <span className="font-mono">{queue.length} items</span></div>
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={() => runQueue(false)} disabled={isPlaying}>Start (Play)</Button>
+                  <Button size="sm" variant="outline" onClick={() => runQueue(true)} disabled={isPlaying}>Start (Visualize)</Button>
+                  <Button size="sm" variant="ghost" onClick={() => clearQueue()}>Clear</Button>
                 </div>
               </div>
             </div>
