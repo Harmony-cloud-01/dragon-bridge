@@ -24,6 +24,9 @@ import { LanguageOnboarding } from "./language-onboarding"
 import { ToneDrills } from "./tone-drills"
 import { ReviewSRS } from "./review-srs"
 import { MarketTask } from "./market-task"
+import { LessonsSection } from "./lessons-section"
+import { AiTeacher } from "./ai-teacher"
+import { ProgressDashboard } from "./progress-dashboard"
 import { TeacherMode } from "./teacher-mode"
 import { Reminders } from "./reminders"
 import { useProgress } from "@/hooks/use-progress"
@@ -200,6 +203,24 @@ function AppShellInner() {
           {currentSection === "market-task" && (
             <SectionWrapper back={() => setCurrentSection("home")} title={t("backHome")}>
               <MarketTask />
+            </SectionWrapper>
+          )}
+
+          {currentSection === "lessons" && (
+            <SectionWrapper back={() => setCurrentSection("home")} title={t!("backHome")}>
+              <LessonsSection onPracticeTone={() => setCurrentSection("tone-drills")} />
+            </SectionWrapper>
+          )}
+
+          {currentSection === "ai-teacher" && (
+            <SectionWrapper back={() => setCurrentSection("home")} title={t!("backHome")}>
+              <AiTeacher />
+            </SectionWrapper>
+          )}
+
+          {currentSection === "progress" && (
+            <SectionWrapper back={() => setCurrentSection("home")} title={t!("backHome")}>
+              <ProgressDashboard />
             </SectionWrapper>
           )}
 

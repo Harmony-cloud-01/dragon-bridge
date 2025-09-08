@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Home, BookOpen, Users, CalendarDays, Settings } from 'lucide-react'
+import { Home, BookOpen, MessageSquare, BarChart3, Settings } from 'lucide-react'
 import { cn } from "@/lib/utils"
 import { useI18n } from "./i18n-provider"
 
@@ -12,9 +12,9 @@ type BottomNavProps = {
 
 const items = [
   { id: "home", icon: Home, labelKey: "navHome" },
-  { id: "dialect-vocabulary", icon: BookOpen, labelKey: "navWords" },
-  { id: "dialect-phrases", icon: Users, labelKey: "navPhrases" },
-  { id: "calendar", icon: CalendarDays, labelKey: "navCalendar" },
+  { id: "lessons", icon: BookOpen, labelKey: "navLessons" },
+  { id: "ai-teacher", icon: MessageSquare, labelKey: "navChat" },
+  { id: "progress", icon: BarChart3, labelKey: "navProgress" },
   { id: "settings", icon: Settings, labelKey: "navSettings" },
 ]
 
