@@ -1,0 +1,4 @@
+id,text,pinyin,dialectCode,audio
+# Example rows (remove the leading # to use)
+# l001,你好,ni hao,zh-CN,nihao.mp3
+# l002,谢谢,xie xie,zh-CN,xiexie.mp3
