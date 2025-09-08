@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
+import { analyzeAudioFromElement } from "@/lib/tones"
 import { ToneVisualizer } from "@/components/tones/ToneVisualizer"
 import { Button } from "@/components/ui/button"
 import { useDialect } from "@/hooks/use-dialect"
@@ -52,8 +53,21 @@ export function TonePlayer({ text, dialectCode = "zh-CN" }: { text: string; dial
       }
     }
     window.addEventListener("tone:analysis", handler as any)
+    const audioHandler = async (e: Event) => {
+      const ev = e as CustomEvent
+      const d = ev.detail || {}
+      if (d?.text !== text) return
+      const el: HTMLMediaElement | undefined = d.element
+      if (!el) return
+      try {
+        const analysis = await analyzeAudioFromElement(el, text)
+        window.dispatchEvent(new CustomEvent("tone:analysis", { detail: { text, dialectCode: d.dialectCode, analysis } }))
+      } catch {}
+    }
+    window.addEventListener("tone:audio", audioHandler as any)
     return () => {
       window.removeEventListener("tone:analysis", handler as any)
+      window.removeEventListener("tone:audio", audioHandler as any)
       clearTimers()
     }
   }, [text])

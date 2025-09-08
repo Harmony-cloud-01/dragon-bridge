@@ -2,6 +2,8 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useDialect } from "@/hooks/use-dialect"
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
 
 export function DialectDiagnostics() {
   const {
@@ -10,19 +12,36 @@ export function DialectDiagnostics() {
     speechSupported,
     voices,
     hasChineseVoice,
+    playPronunciation,
+    isPlaying,
   } = useDialect()
+  const [testCode, setTestCode] = useState<string>(supportedDialects[0]?.code || "zh-CN")
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Dialect Diagnostics</CardTitle>
       </CardHeader>
-      <CardContent className="text-sm space-y-1">
+      <CardContent className="text-sm space-y-2">
         <div>Supported dialects: <span className="font-mono">{supportedDialects.length}</span></div>
         <div>Selected dialects: <span className="font-mono">{selectedDialects.join(", ") || "(none)"}</span></div>
         <div>Speech supported: <span className="font-mono">{String(speechSupported)}</span></div>
         <div>Voices available: <span className="font-mono">{voices.length}</span></div>
         <div>Has Chinese voice: <span className="font-mono">{String(hasChineseVoice)}</span></div>
+        <div className="flex items-center gap-2">
+          <label htmlFor="dialect-test" className="text-stone-700">Test dialect:</label>
+          <select
+            id="dialect-test"
+            className="border rounded px-2 py-1 text-sm"
+            value={testCode}
+            onChange={(e) => setTestCode(e.target.value)}
+          >
+            {supportedDialects.map((d) => (
+              <option key={d.code} value={d.code}>{d.name} ({d.region})</option>
+            ))}
+          </select>
+          <Button size="sm" onClick={() => playPronunciation("你好", testCode)} disabled={isPlaying}>Test voice</Button>
+        </div>
         {voices.length > 0 && (
           <details className="mt-2">
             <summary className="cursor-pointer">List voices</summary>
@@ -39,4 +58,3 @@ export function DialectDiagnostics() {
     </Card>
   )
 }
-

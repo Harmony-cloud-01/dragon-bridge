@@ -228,6 +228,7 @@ export function DialectProvider({ children }: DialectProviderProps) {
       logEvent({ type: "audio.play", text, dialect: dialectCode, t: Date.now() })
       try {
         await audio.play()
+        try { window.dispatchEvent(new CustomEvent("tone:audio", { detail: { text, dialectCode, element: audio } })) } catch {}
       } catch (err) {
         stopAudio()
         if (isMobile) {
@@ -262,7 +263,7 @@ export function DialectProvider({ children }: DialectProviderProps) {
           setCurrentlyPlaying(text)
           setCurrentDialect(dialectCode)
           logEvent({ type: "audio.play", text, dialect: dialectCode, t: Date.now() })
-          try { await audio.play() } catch { stopAudio() }
+          try { await audio.play(); try { window.dispatchEvent(new CustomEvent("tone:audio", { detail: { text, dialectCode, element: audio } })) } catch {} } catch { stopAudio() }
           return
         } else {
           toast({ title: "Offline", description: "Audio not cached for this phrase" })
@@ -283,7 +284,7 @@ export function DialectProvider({ children }: DialectProviderProps) {
           setCurrentlyPlaying(text)
           setCurrentDialect(dialectCode)
           logEvent({ type: "audio.play", text, dialect: dialectCode, t: Date.now() })
-          try { await audio.play() } catch { stopAudio() }
+          try { await audio.play(); try { window.dispatchEvent(new CustomEvent("tone:audio", { detail: { text, dialectCode, element: audio } })) } catch {} } catch { stopAudio() }
           return
         }
       }
