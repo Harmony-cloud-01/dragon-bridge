@@ -10,6 +10,7 @@ export type Lesson = {
   difficulty: "Beginner" | "Intermediate" | "Advanced"
   dialectCode: string
   words: { text: string }[]
+  tags?: string[]
 }
 
 export function LessonCard({ lesson, onPractice }: { lesson: Lesson; onPractice?: (l: Lesson) => void }) {
@@ -26,6 +27,13 @@ export function LessonCard({ lesson, onPractice }: { lesson: Lesson; onPractice?
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
+        {lesson.tags && lesson.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1 text-xs">
+            {lesson.tags.map((t, i) => (
+              <span key={i} className="px-2 py-0.5 rounded bg-emerald-50 border border-emerald-200 text-emerald-700">#{t}</span>
+            ))}
+          </div>
+        )}
         <div className="flex flex-wrap gap-2">
           {lesson.words.slice(0, 12).map((w, i) => (
             <span key={i} className="px-2 py-1 bg-stone-100 rounded text-sm">
@@ -44,4 +52,3 @@ export function LessonCard({ lesson, onPractice }: { lesson: Lesson; onPractice?
     </Card>
   )
 }
-

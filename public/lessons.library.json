@@ -5,8 +5,35 @@
     "difficulty": "Beginner",
     "dialectCode": "zh-CN",
     "words": [
-      { "text": "你好" }, { "text": "谢谢" }, { "text": "多少钱" }, { "text": "太贵了" },
-      { "text": "可以便宜点吗" }, { "text": "再见" }, { "text": "苹果" }, { "text": "土豆" }
+      {
+        "text": "你好"
+      },
+      {
+        "text": "谢谢"
+      },
+      {
+        "text": "多少钱"
+      },
+      {
+        "text": "太贵了"
+      },
+      {
+        "text": "可以便宜点吗"
+      },
+      {
+        "text": "再见"
+      },
+      {
+        "text": "苹果"
+      },
+      {
+        "text": "土豆"
+      }
+    ],
+    "tags": [
+      "market",
+      "bargain",
+      "daily"
     ]
   },
   {
@@ -15,20 +42,83 @@
     "difficulty": "Beginner",
     "dialectCode": "zh-CN",
     "words": [
-      { "text": "锄头" }, { "text": "镰刀" }, { "text": "铁锹" }, { "text": "喷雾器" },
-      { "text": "水桶" }, { "text": "车" }, { "text": "播种" }, { "text": "浇水" }
+      {
+        "text": "锄头"
+      },
+      {
+        "text": "镰刀"
+      },
+      {
+        "text": "铁锹"
+      },
+      {
+        "text": "喷雾器"
+      },
+      {
+        "text": "水桶"
+      },
+      {
+        "text": "车"
+      },
+      {
+        "text": "播种"
+      },
+      {
+        "text": "浇水"
+      }
+    ],
+    "tags": [
+      "farm",
+      "tools",
+      "actions"
     ]
-  }
-  ,
+  },
   {
     "id": "travel-basics",
     "title": "Travel Basics",
     "difficulty": "Beginner",
     "dialectCode": "zh-CN",
     "words": [
-      { "text": "车站" }, { "text": "火车" }, { "text": "汽车" }, { "text": "公交" },
-      { "text": "到哪里" }, { "text": "买票" }, { "text": "几点" }, { "text": "出发" },
-      { "text": "到达" }, { "text": "换乘" }, { "text": "路线" }, { "text": "旁边" }
+      {
+        "text": "车站"
+      },
+      {
+        "text": "火车"
+      },
+      {
+        "text": "汽车"
+      },
+      {
+        "text": "公交"
+      },
+      {
+        "text": "到哪里"
+      },
+      {
+        "text": "买票"
+      },
+      {
+        "text": "几点"
+      },
+      {
+        "text": "出发"
+      },
+      {
+        "text": "到达"
+      },
+      {
+        "text": "换乘"
+      },
+      {
+        "text": "路线"
+      },
+      {
+        "text": "旁边"
+      }
+    ],
+    "tags": [
+      "travel",
+      "directions"
     ]
   },
   {
@@ -37,8 +127,34 @@
     "difficulty": "Beginner",
     "dialectCode": "zh-CN",
     "words": [
-      { "text": "头疼" }, { "text": "咳嗽" }, { "text": "发烧" }, { "text": "药" },
-      { "text": "医生" }, { "text": "护士" }, { "text": "打针" }, { "text": "休息" }
+      {
+        "text": "头疼"
+      },
+      {
+        "text": "咳嗽"
+      },
+      {
+        "text": "发烧"
+      },
+      {
+        "text": "药"
+      },
+      {
+        "text": "医生"
+      },
+      {
+        "text": "护士"
+      },
+      {
+        "text": "打针"
+      },
+      {
+        "text": "休息"
+      }
+    ],
+    "tags": [
+      "health",
+      "clinic"
     ]
   },
   {
@@ -47,8 +163,34 @@
     "difficulty": "Beginner",
     "dialectCode": "zh-CN",
     "words": [
-      { "text": "老师" }, { "text": "学生" }, { "text": "作业" }, { "text": "考试" },
-      { "text": "课堂" }, { "text": "放学" }, { "text": "接送" }, { "text": "家长会" }
+      {
+        "text": "老师"
+      },
+      {
+        "text": "学生"
+      },
+      {
+        "text": "作业"
+      },
+      {
+        "text": "考试"
+      },
+      {
+        "text": "课堂"
+      },
+      {
+        "text": "放学"
+      },
+      {
+        "text": "接送"
+      },
+      {
+        "text": "家长会"
+      }
+    ],
+    "tags": [
+      "school",
+      "parent"
     ]
   },
   {
@@ -57,8 +199,34 @@
     "difficulty": "Beginner",
     "dialectCode": "zh-CN",
     "words": [
-      { "text": "做饭" }, { "text": "打扫" }, { "text": "洗衣服" }, { "text": "扫地" },
-      { "text": "拖地" }, { "text": "倒垃圾" }, { "text": "叠衣服" }, { "text": "修理" }
+      {
+        "text": "做饭"
+      },
+      {
+        "text": "打扫"
+      },
+      {
+        "text": "洗衣服"
+      },
+      {
+        "text": "扫地"
+      },
+      {
+        "text": "拖地"
+      },
+      {
+        "text": "倒垃圾"
+      },
+      {
+        "text": "叠衣服"
+      },
+      {
+        "text": "修理"
+      }
+    ],
+    "tags": [
+      "home",
+      "chores"
     ]
   }
 ]
