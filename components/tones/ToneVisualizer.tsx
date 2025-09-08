@@ -104,7 +104,7 @@ export function ToneVisualizer({
               )}
               aria-label={`Tone marker ${i + 1}`}
             >
-              {mockToneForChar(ch)}
+              {(tones[i] ?? 5)}
             </div>
           ))}
         </div>
