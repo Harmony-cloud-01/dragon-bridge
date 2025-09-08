@@ -24,7 +24,7 @@ export function SimpleInterface({ onNavigate }: SimpleInterfaceProps) {
     { id: "reminders", title: t("remindersTitle"), subtitle: t("remindersSubtitle"), icon: <Bell className="h-12 w-12" />, color: "bg-emerald-100 hover:bg-emerald-200", description: t("descReminders") },
     { id: "teacher-mode", title: t("teacherModeTitle"), subtitle: t("teacherModeSubtitle"), icon: <GraduationCap className="h-12 w-12" />, color: "bg-stone-100 hover:bg-stone-200", description: t("descTeacherMode") },
     { id: "calendar", title: t("farmCalendar"), subtitle: t("farmCalendar"), icon: <Calendar className="h-12 w-12" />, color: "bg-yellow-100 hover:bg-yellow-200", description: t("descAlmanacKiosk") },
-    { id: "dialect-settings", title: t("dialects"), subtitle: t("dialects"), icon: <Settings className="h-12 w-12" />, color: "bg-purple-100 hover:bg-purple-200", description: t("descSettingsPavilion") },
+    { id: "settings", title: t("dialects"), subtitle: t("dialects"), icon: <Settings className="h-12 w-12" />, color: "bg-purple-100 hover:bg-purple-200", description: t("descSettingsPavilion") },
   ]
 
   const handleGreeting = async () => {

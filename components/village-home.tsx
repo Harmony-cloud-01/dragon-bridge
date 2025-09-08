@@ -63,7 +63,7 @@ export function VillageHome({ onNavigate = () => {} }: VillageHomeProps) {
       descKey: "descAudioBooth",
     },
     {
-      id: "dialect-settings",
+      id: "settings",
       titleKey: "placeSettingsPavilion",
       subtitleKey: "dialects",
       icon: <Settings className="h-6 w-6 text-teal-700" />,

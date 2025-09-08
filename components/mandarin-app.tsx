@@ -176,7 +176,7 @@ function AppShellInner() {
             </SectionWrapper>
           )}
 
-          {currentSection === "settings" && (
+          {(currentSection === "settings" || currentSection === "dialect-settings") && (
             <SectionWrapper back={() => setCurrentSection("home")} title={t("backHome")}>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <DialectSelector />
