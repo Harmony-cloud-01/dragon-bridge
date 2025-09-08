@@ -70,6 +70,14 @@ export function LessonsSection({ onPracticeTone }: { onPracticeTone?: (example: 
 
   const allTags = Array.from(new Set(lessons.flatMap((l) => l.tags || [])))
   const filtered = tag ? lessons.filter((l) => (l.tags || []).includes(tag)) : lessons
+
+  // If filter yields nothing but lessons exist, auto-clear filter once
+  useEffect(() => {
+    if (tag && lessons.length > 0 && filtered.length === 0) {
+      setTag(null)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lessons, tag])
   return (
     <div className="space-y-6">
       <LessonsImporter onImported={() => loadLessonLibrary().then((lib) => lib.length && setLessons(lib))} />
@@ -97,6 +105,9 @@ export function LessonsSection({ onPracticeTone }: { onPracticeTone?: (example: 
           <CardTitle>Lessons</CardTitle>
         </CardHeader>
         <CardContent>
+          <div className="text-xs text-stone-600 mb-2">
+            Loaded: <span className="font-mono">{lessons.length}</span> {tag ? `• Filter: #${tag}` : null}
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {filtered.map((lesson) => (
               <LessonCard
@@ -108,6 +119,9 @@ export function LessonsSection({ onPracticeTone }: { onPracticeTone?: (example: 
                 }}
               />
             ))}
+            {lessons.length > 0 && filtered.length === 0 && (
+              <div className="text-sm text-stone-600">No lessons for this filter.</div>
+            )}
           </div>
         </CardContent>
       </Card>
