@@ -15,6 +15,7 @@ import { logEvent } from "@/utils/activity-log"
 import { scopedKey } from "@/utils/profile-storage"
 import { isOffline } from "@/utils/offline"
 import { findAudioFor, preloadLessons } from "@/utils/lessons"
+import { getPreferLocalAudio } from "@/stores/settings"
 
 export interface DialectInfo {
   name: string
@@ -243,7 +244,7 @@ export function DialectProvider({ children }: DialectProviderProps) {
         return
       }
       stopAudio()
-      // Offline preference: try baked audio if available
+      // Prefer baked audio when offline or when user opted to prefer local audio
       if (isOffline()) {
         const url = await findAudioFor(text, dialectCode)
         if (url) {
@@ -264,6 +265,24 @@ export function DialectProvider({ children }: DialectProviderProps) {
           return
         } else {
           toast({ title: "Offline", description: "Audio not cached for this phrase" })
+          return
+        }
+      } else if (getPreferLocalAudio()) {
+        const url = await findAudioFor(text, dialectCode)
+        if (url) {
+          stopAudio()
+          const audio = new Audio(url)
+          audioElRef.current = audio
+          audio.onerror = () => {
+            stopAudio()
+            toast({ title: "Audio unavailable", description: "No recording available for this phrase" })
+          }
+          audio.onended = () => stopAudio()
+          setIsPlaying(true)
+          setCurrentlyPlaying(text)
+          setCurrentDialect(dialectCode)
+          logEvent({ type: "audio.play", text, dialect: dialectCode, t: Date.now() })
+          try { await audio.play() } catch { stopAudio() }
           return
         }
       }

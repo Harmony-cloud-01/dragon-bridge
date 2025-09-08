@@ -15,7 +15,7 @@ const items = [
   { id: "dialect-vocabulary", icon: BookOpen, labelKey: "navWords" },
   { id: "dialect-phrases", icon: Users, labelKey: "navPhrases" },
   { id: "calendar", icon: CalendarDays, labelKey: "navCalendar" },
-  { id: "dialect-settings", icon: Settings, labelKey: "navSettings" },
+  { id: "settings", icon: Settings, labelKey: "navSettings" },
 ]
 
 export function BottomNav({ current = "home", onChange = () => {} }: BottomNavProps) {

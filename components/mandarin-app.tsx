@@ -27,6 +27,7 @@ import { MarketTask } from "./market-task"
 import { TeacherMode } from "./teacher-mode"
 import { Reminders } from "./reminders"
 import { useProgress } from "@/hooks/use-progress"
+import { AppSettings } from "./app-settings"
 
 type HomeVariant = "village" | "classic"
 const LS_HOME_VARIANT = "ui.homeVariant"
@@ -175,9 +176,12 @@ function AppShellInner() {
             </SectionWrapper>
           )}
 
-          {currentSection === "dialect-settings" && (
+          {currentSection === "settings" && (
             <SectionWrapper back={() => setCurrentSection("home")} title={t("backHome")}>
-              <DialectSelector />
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <DialectSelector />
+                <AppSettings />
+              </div>
             </SectionWrapper>
           )}
 
