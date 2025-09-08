@@ -21,7 +21,12 @@ export function LessonCard({ lesson, onPractice }: { lesson: Lesson; onPractice?
   const { toast } = useToast()
   const [selected, setSelected] = useState<Set<number>>(new Set())
   const total = lesson.words.length
+  const now = Date.now()
   const inSrs = lesson.words.reduce((acc, w) => acc + (items[`word:${w.text}`] ? 1 : 0), 0)
+  const dueCount = lesson.words.reduce((acc, w) => {
+    const it = items[`word:${w.text}`]
+    return acc + (it && it.due <= now ? 1 : 0)
+  }, 0)
   const addAll = () => {
     lesson.words.forEach((w) => addItem(w.text, "word"))
     toast({ title: "Added to SRS", description: `Queued ${lesson.words.length} items.` })
@@ -54,7 +59,7 @@ export function LessonCard({ lesson, onPractice }: { lesson: Lesson; onPractice?
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <span>{lesson.title}</span>
-          <span className="text-xs text-stone-500">{lesson.difficulty} • in SRS {inSrs}/{total}</span>
+          <span className="text-xs text-stone-500">{lesson.difficulty} • in SRS {inSrs}/{total} • due {dueCount}</span>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -89,6 +94,24 @@ export function LessonCard({ lesson, onPractice }: { lesson: Lesson; onPractice?
             <>
               <Button size="sm" variant="outline" onClick={() => onPractice(lesson)}>Practice</Button>
               <Button size="sm" variant="ghost" onClick={practiceAll}>Practice all</Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                disabled={selected.size === 0}
+                onClick={() => {
+                  const list = Array.from(selected).map((i) => lesson.words[i]?.text).filter(Boolean) as string[]
+                  if (list.length) {
+                    try {
+                      localStorage.setItem("lessons.current", JSON.stringify(lesson))
+                      localStorage.setItem("tone.practice.queue", JSON.stringify(list))
+                      localStorage.setItem("tone.practice.text", list[0])
+                    } catch {}
+                    onPractice(lesson)
+                  }
+                }}
+              >
+                Practice selected
+              </Button>
             </>
           )}
         </div>

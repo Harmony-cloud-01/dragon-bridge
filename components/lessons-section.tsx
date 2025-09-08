@@ -87,15 +87,20 @@ export function LessonsSection({ onPracticeTone }: { onPracticeTone?: (example: 
           <CardHeader>
             <CardTitle>Filter</CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-wrap gap-2 text-sm">
-            <Button size="sm" variant={tag === null ? "default" : "outline"} onClick={() => setTag(null)}>
-              All
-            </Button>
-            {allTags.map((tname) => (
-              <Button key={tname} size="sm" variant={tag === tname ? "default" : "outline"} onClick={() => setTag(tname)}>
-                #{tname}
+          <CardContent className="flex flex-wrap gap-2 items-center text-sm">
+            <div className="flex gap-2">
+              <Button size="sm" variant={tag === null ? "default" : "outline"} onClick={() => setTag(null)}>
+                All
               </Button>
-            ))}
+              {allTags.map((tname) => (
+                <Button key={tname} size="sm" variant={tag === tname ? "default" : "outline"} onClick={() => setTag(tname)}>
+                  #{tname}
+                </Button>
+              ))}
+            </div>
+            <div className="ml-auto">
+              <Button size="sm" variant="ghost" onClick={() => setTag(null)}>Reset filters</Button>
+            </div>
           </CardContent>
         </Card>
       )}
