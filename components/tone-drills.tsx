@@ -7,6 +7,10 @@ import { Badge } from "@/components/ui/badge"
 import { useDialect } from "@/hooks/use-dialect"
 import { useI18n } from "./i18n-provider"
 import { Mic, Volume2, Waves, Sparkles } from 'lucide-react'
+import { isOffline } from "@/utils/offline"
+import { isLowRam } from "@/utils/device"
+import { useToast } from "@/hooks/use-toast"
+import { ToneVisualizer, SimpleToneStrip } from "@/components/tone-visualizer"
 
 type Tone = 1 | 2 | 3 | 4
 const TONE_NAMES: Record<Tone, string> = { 1: "High-flat", 2: "Rising", 3: "Fall-rise", 4: "Falling" }
@@ -16,6 +20,7 @@ const DEFAULT_SYLLABLES = ["ma", "ba", "da", "la"]
 export function ToneDrills() {
   const { t } = useI18n()
   const { playPronunciation, isPlaying } = useDialect()
+  const { toast } = useToast()
   const [syllable, setSyllable] = useState("ma")
   const [targetTone, setTargetTone] = useState<Tone>(1)
   const [score, setScore] = useState({ correct: 0, total: 0 })
@@ -39,6 +44,13 @@ export function ToneDrills() {
     const tone = (Math.floor(Math.random() * 4) + 1) as Tone
     setTargetTone(tone)
     const marked = markTone(syllable, tone)
+    if (isOffline()) {
+      // No pre-recorded audio mapping yet; warn user gracefully
+      toast({
+        title: t("offlineTitle") ?? "You are offline",
+        description: t("offlineDetail") ?? "Some audio may not be available.",
+      })
+    }
     await playPronunciation(marked)
   }
 
@@ -123,6 +135,9 @@ export function ToneDrills() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {isLowRam ? (
+            <SimpleToneStrip />
+          ) : null}
           <div className="flex items-center gap-3 justify-center">
             <span className="text-sm text-gray-600">Syllable</span>
             <div className="flex gap-2">
@@ -179,13 +194,17 @@ export function ToneDrills() {
             )}
           </div>
           <div className="mx-auto max-w-2xl">
-            <canvas
-              ref={canvasRef}
-              width={800}
-              height={160}
-              className="w-full rounded border bg-slate-50"
-              aria-label="Voice waveform"
-            />
+            {isLowRam ? (
+              <SimpleToneStrip />
+            ) : (
+              <canvas
+                ref={canvasRef}
+                width={800}
+                height={160}
+                className="w-full rounded border bg-slate-50"
+                aria-label="Voice waveform"
+              />
+            )}
           </div>
           <div className="text-xs text-gray-500 text-center">
             Note: Full tone recognition requires signal processing/ML. This visualization helps you self-evaluate.

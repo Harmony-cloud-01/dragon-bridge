@@ -9,6 +9,7 @@ import { I18nProvider } from "@/components/i18n-provider"
 import { BasePathProvider } from "@/components/BasePathProvider"
 import { LiteModeProvider } from "@/components/lite-mode"
 import { LiteModeToggle } from "@/components/lite-mode-toggle"
+import { Toaster } from "@/components/ui/toaster"
 
 // Base path for GitHub Pages
 const isProduction = process.env.NODE_ENV === 'production'
@@ -47,6 +48,7 @@ html {
               <OfflineBanner />
               <PWARegister />
               <LiteModeToggle />
+              <Toaster />
             </I18nProvider>
           </LiteModeProvider>
         </BasePathProvider>

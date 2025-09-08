@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button"
 import { Volume2, Play } from 'lucide-react'
 import { useDialect } from "@/hooks/use-dialect"
 import { AudioControls } from "./audio-controls"
+import { useToast } from "@/hooks/use-toast"
+import { isOffline } from "@/utils/offline"
 import { useI18n } from "./i18n-provider"
 
 const tones = [
@@ -28,13 +30,26 @@ export function PronunciationGuide() {
   const [selectedTone, setSelectedTone] = useState<number | null>(null)
   const { playPronunciation, isPlaying, currentlyPlaying } = useDialect()
   const { t } = useI18n()
+  const { toast } = useToast()
 
   const handlePlayToneExample = async (example: string) => {
     const chineseText = example.split(" ")[0]
+    if (isOffline()) {
+      toast({
+        title: t("offlineTitle") ?? "You are offline",
+        description: t("offlineDetail") ?? "Some audio may not be available.",
+      })
+    }
     await playPronunciation(chineseText)
   }
 
   const handlePlayPinyinExample = async (_pinyin: string, chinese: string) => {
+    if (isOffline()) {
+      toast({
+        title: t("offlineTitle") ?? "You are offline",
+        description: t("offlineDetail") ?? "Some audio may not be available.",
+      })
+    }
     await playPronunciation(chinese)
   }
 
