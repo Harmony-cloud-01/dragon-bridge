@@ -49,6 +49,19 @@ export function AppSettings() {
             HarmonyOnline.org
           </a>
           .
+          {" "}
+          Or open an issue at
+          {" "}
+          <a
+            href="https://github.com/Harmony-cloud-01/dragon-bridge/issues"
+            target="_blank"
+            rel="noreferrer"
+            className="underline underline-offset-2"
+            aria-label="Dragon Bridge GitHub Issues"
+          >
+            GitHub Issues
+          </a>
+          .
         </CardContent>
       </Card>
 

@@ -4,8 +4,10 @@ import { LessonCard, type Lesson } from "@/components/lesson-card"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useI18n } from "@/components/i18n-provider"
+import { useEffect, useState } from "react"
+import { loadLessonLibrary } from "@/utils/lessons-lib"
 
-const LESSONS: Lesson[] = [
+const FALLBACK: Lesson[] = [
   {
     id: "market-beginner",
     title: "Market Conversations (Beginner)",
@@ -41,6 +43,13 @@ const LESSONS: Lesson[] = [
 
 export function LessonsSection({ onPracticeTone }: { onPracticeTone?: (example: string) => void }) {
   const { t } = useI18n()
+  const [lessons, setLessons] = useState<Lesson[]>(FALLBACK)
+
+  useEffect(() => {
+    loadLessonLibrary().then((lib) => {
+      if (lib.length) setLessons(lib)
+    })
+  }, [])
   return (
     <div className="space-y-6">
       <Card>
@@ -49,7 +58,7 @@ export function LessonsSection({ onPracticeTone }: { onPracticeTone?: (example: 
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {LESSONS.map((lesson) => (
+            {lessons.map((lesson) => (
               <LessonCard
                 key={lesson.id}
                 lesson={lesson}
@@ -74,4 +83,3 @@ export function LessonsSection({ onPracticeTone }: { onPracticeTone?: (example: 
     </div>
   )
 }
-

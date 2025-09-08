@@ -1,0 +1,22 @@
+[
+  {
+    "id": "market-beginner",
+    "title": "Market Conversations (Beginner)",
+    "difficulty": "Beginner",
+    "dialectCode": "zh-CN",
+    "words": [
+      { "text": "你好" }, { "text": "谢谢" }, { "text": "多少钱" }, { "text": "太贵了" },
+      { "text": "可以便宜点吗" }, { "text": "再见" }, { "text": "苹果" }, { "text": "土豆" }
+    ]
+  },
+  {
+    "id": "farm-tools",
+    "title": "Farm Tools & Actions",
+    "difficulty": "Beginner",
+    "dialectCode": "zh-CN",
+    "words": [
+      { "text": "锄头" }, { "text": "镰刀" }, { "text": "铁锹" }, { "text": "喷雾器" },
+      { "text": "水桶" }, { "text": "车" }, { "text": "播种" }, { "text": "浇水" }
+    ]
+  }
+]
