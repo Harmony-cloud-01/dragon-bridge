@@ -11,6 +11,7 @@ import { isOffline } from "@/utils/offline"
 import { isLowRam } from "@/utils/device"
 import { useToast } from "@/hooks/use-toast"
 import { ToneVisualizer, SimpleToneStrip } from "@/components/tone-visualizer"
+import { TonePlayer } from "@/components/tones/TonePlayer"
 import { getConsent, setConsent } from "@/stores/consent"
 import { Switch } from "@/components/ui/switch"
 
@@ -190,6 +191,17 @@ export function ToneDrills() {
           <div className="text-center text-sm text-gray-600">
             Score: <span className="font-semibold">{score.correct}/{score.total}</span>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Waves className="h-5 w-5" /> Tone Visualization Demo
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <TonePlayer text={markTone(syllable, targetTone)} dialectCode="zh-CN" />
         </CardContent>
       </Card>
 
