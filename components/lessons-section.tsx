@@ -7,6 +7,7 @@ import { useI18n } from "@/components/i18n-provider"
 import { useEffect, useState } from "react"
 import { loadLessonLibrary } from "@/utils/lessons-lib"
 import { LessonsImporter } from "@/components/lessons-importer"
+import { useSrs } from "@/hooks/use-srs"
 
 const FALLBACK: Lesson[] = [
   {
@@ -46,6 +47,10 @@ export function LessonsSection({ onPracticeTone }: { onPracticeTone?: (example: 
   const { t } = useI18n()
   const [lessons, setLessons] = useState<Lesson[]>(FALLBACK)
   const [tag, setTag] = useState<string | null>(null)
+  const { items } = useSrs()
+  const totalSrs = Object.keys(items).length
+  const now = Date.now()
+  const dueSrs = Object.values(items).filter((it) => it.due <= now).length
 
   useEffect(() => {
     loadLessonLibrary().then((lib) => {
@@ -110,8 +115,9 @@ export function LessonsSection({ onPracticeTone }: { onPracticeTone?: (example: 
           <CardTitle>Lessons</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-xs text-stone-600 mb-2">
-            Loaded: <span className="font-mono">{lessons.length}</span> {tag ? `• Filter: #${tag}` : null}
+          <div className="flex flex-wrap items-center gap-4 text-xs text-stone-600 mb-2">
+            <div>Loaded: <span className="font-mono">{lessons.length}</span>{tag ? <> • Filter: <span className="font-mono">#{tag}</span></> : null}</div>
+            <div className="ml-auto">SRS total: <span className="font-mono">{totalSrs}</span> • due today: <span className="font-mono">{dueSrs}</span></div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {filtered.map((lesson) => (
