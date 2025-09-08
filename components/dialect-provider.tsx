@@ -1,6 +1,12 @@
 "use client"
-// @ts-ignore
-import { debounce } from "lodash-es";
+// Lightweight debounce to avoid pulling lodash-es for a single helper
+function debounce<T extends (...args: any[]) => void>(fn: T, wait = 500) {
+  let t: any
+  return (...args: any[]) => {
+    clearTimeout(t)
+    t = setTimeout(() => fn(...args), wait)
+  }
+}
 import {
   createContext,
   useContext,

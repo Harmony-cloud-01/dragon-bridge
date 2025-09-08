@@ -2,26 +2,33 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { useToast } from "@/hooks/use-toast"
 import { useState } from "react"
 
 export function LessonsImporter({ onImported }: { onImported?: () => void }) {
   const [status, setStatus] = useState<string>("")
   const [url, setUrl] = useState<string>(process.env.NEXT_PUBLIC_LESSONS_URL || "https://raw.githubusercontent.com/Harmony-cloud-01/dragon-bridge/main/public/lessons.library.json")
+  const { toast } = useToast()
   const importFile = async (file: File) => {
     try {
       const text = await file.text()
       const json = JSON.parse(text)
       if (!Array.isArray(json)) throw new Error("Invalid JSON: expected array")
+      const valid = json.every((l: any) => l && typeof l.id === 'string' && typeof l.title === 'string' && Array.isArray(l.words))
+      if (!valid) throw new Error("Invalid lesson shape (id/title/words required)")
       localStorage.setItem("lessons.library.override", JSON.stringify(json))
       setStatus(`Imported ${json.length} lessons.`)
+      toast({ title: "Library imported", description: `Loaded ${json.length} lessons from file.` })
       onImported?.()
     } catch (e: any) {
       setStatus(`Error: ${e?.message || e}`)
+      toast({ title: "Import failed", description: String(e?.message || e) })
     }
   }
   const clearOverride = () => {
     localStorage.removeItem("lessons.library.override")
     setStatus("Cleared override.")
+    toast({ title: "Override cleared" })
     onImported?.()
   }
   const loadFromUrl = async () => {
@@ -31,11 +38,15 @@ export function LessonsImporter({ onImported }: { onImported?: () => void }) {
       if (!res.ok) throw new Error(String(res.status))
       const json = await res.json()
       if (!Array.isArray(json)) throw new Error("Invalid JSON: expected array")
+      const valid = json.every((l: any) => l && typeof l.id === 'string' && typeof l.title === 'string' && Array.isArray(l.words))
+      if (!valid) throw new Error("Invalid lesson shape (id/title/words required)")
       localStorage.setItem("lessons.library.override", JSON.stringify(json))
       setStatus(`Loaded ${json.length} lessons from URL.`)
+      toast({ title: "Library loaded", description: `Loaded ${json.length} lessons from URL.` })
       onImported?.()
     } catch (e: any) {
       setStatus(`Error loading URL: ${e?.message || e}`)
+      toast({ title: "Load failed", description: String(e?.message || e) })
     }
   }
   return (

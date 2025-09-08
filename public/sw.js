@@ -66,6 +66,14 @@ self.addEventListener("fetch", (event) => {
 
   if (request.mode === "navigate") {
     event.respondWith(handleNavigate(request))
+  } else if (request.url.endsWith('.json')) {
+    // Stale-while-revalidate for JSON libraries
+    event.respondWith((async () => {
+      const cache = await caches.open(CACHE_NAME)
+      const cached = await cache.match(request)
+      const network = fetch(request).then((res) => { if (res && res.ok) cache.put(request, res.clone()); return res }).catch(() => cached)
+      return cached || network
+    })())
   } else {
     event.respondWith(handleAsset(request))
   }

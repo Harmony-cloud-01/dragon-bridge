@@ -207,19 +207,19 @@ function AppShellInner() {
           )}
 
           {currentSection === "lessons" && (
-            <SectionWrapper back={() => setCurrentSection("home")} title={t!("backHome")}>
+            <SectionWrapper back={() => setCurrentSection("home")} title={t("backHome")}>
               <LessonsSection onPracticeTone={() => setCurrentSection("tone-drills")} />
             </SectionWrapper>
           )}
 
           {currentSection === "ai-teacher" && (
-            <SectionWrapper back={() => setCurrentSection("home")} title={t!("backHome")}>
+            <SectionWrapper back={() => setCurrentSection("home")} title={t("backHome")}>
               <AiTeacher />
             </SectionWrapper>
           )}
 
           {currentSection === "progress" && (
-            <SectionWrapper back={() => setCurrentSection("home")} title={t!("backHome")}>
+            <SectionWrapper back={() => setCurrentSection("home")} title={t("backHome")}>
               <ProgressDashboard />
             </SectionWrapper>
           )}

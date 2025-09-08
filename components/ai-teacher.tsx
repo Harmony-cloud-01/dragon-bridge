@@ -49,32 +49,31 @@ export function AiTeacher() {
       if (!res.ok || !res.body) throw new Error(String(res.status))
       const reader = res.body.getReader()
       const decoder = new TextDecoder()
-      let accum = ""
+      let buffer = ""
       // Ollama streams JSON lines: {"response":"...","done":false}
       while (true) {
         const { value, done } = await reader.read()
         if (done) break
-        const chunk = decoder.decode(value, { stream: true })
-        accum += chunk
-        // Try to extract any "response" fields
-        const parts = accum.split("\n").filter(Boolean)
-        const last = parts[parts.length - 1]
-        try {
-          const obj = JSON.parse(last)
-          if (obj?.response) {
-            // push partial or accumulate
-            setMessages((m) => {
-              const prev = [...m]
-              const lastMsg = prev[prev.length - 1]
-              if (lastMsg?.role === "assistant") {
-                lastMsg.text += obj.response
-                return [...prev.slice(0, -1), lastMsg]
-              }
-              return [...prev, { role: "assistant", text: String(obj.response) }]
-            })
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split("\n")
+        buffer = lines.pop() || ""
+        for (const line of lines) {
+          try {
+            const obj = JSON.parse(line)
+            if (obj?.response) {
+              setMessages((m) => {
+                const prev = [...m]
+                const lastMsg = prev[prev.length - 1]
+                if (lastMsg?.role === "assistant") {
+                  lastMsg.text += obj.response
+                  return [...prev.slice(0, -1), lastMsg]
+                }
+                return [...prev, { role: "assistant", text: String(obj.response) }]
+              })
+            }
+          } catch {
+            // ignore invalid JSON lines
           }
-        } catch {
-          // ignore partial JSON
         }
       }
     } catch (e) {
