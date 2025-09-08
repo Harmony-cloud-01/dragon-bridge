@@ -1,12 +1,14 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useDialect } from "@/hooks/use-dialect"
 import { useI18n } from "./i18n-provider"
 import { Store, Check, X, Volume2 } from 'lucide-react'
+import { loadLessonLibrary } from "@/utils/lessons-lib"
+import { LessonCard, type Lesson } from "@/components/lesson-card"
 
 type Step = {
   context: string // Chinese prompt
@@ -52,6 +54,14 @@ export function MarketTask() {
 
   const finished = stepIndex >= STEPS.length
   const step = !finished ? STEPS[stepIndex] : null
+  const [suggested, setSuggested] = useState<Lesson | null>(null)
+
+  useEffect(() => {
+    loadLessonLibrary().then((lib) => {
+      const L = lib.find((l) => l.id === "market-beginner") || null
+      setSuggested(L)
+    })
+  }, [])
 
   const playContext = async () => {
     if (!step) return
@@ -121,6 +131,12 @@ export function MarketTask() {
                   <X className="h-4 w-4" /> Restart
                 </Button>
               </div>
+              {suggested && (
+                <div className="mt-4 text-left">
+                  <div className="text-sm font-semibold mb-2">Suggested Lesson</div>
+                  <LessonCard lesson={suggested} />
+                </div>
+              )}
             </div>
           )}
         </CardContent>

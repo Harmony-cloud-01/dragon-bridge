@@ -19,4 +19,46 @@
       { "text": "水桶" }, { "text": "车" }, { "text": "播种" }, { "text": "浇水" }
     ]
   }
+  ,
+  {
+    "id": "travel-basics",
+    "title": "Travel Basics",
+    "difficulty": "Beginner",
+    "dialectCode": "zh-CN",
+    "words": [
+      { "text": "车站" }, { "text": "火车" }, { "text": "汽车" }, { "text": "公交" },
+      { "text": "到哪里" }, { "text": "买票" }, { "text": "几点" }, { "text": "出发" },
+      { "text": "到达" }, { "text": "换乘" }, { "text": "路线" }, { "text": "旁边" }
+    ]
+  },
+  {
+    "id": "health-clinic",
+    "title": "Health Clinic",
+    "difficulty": "Beginner",
+    "dialectCode": "zh-CN",
+    "words": [
+      { "text": "头疼" }, { "text": "咳嗽" }, { "text": "发烧" }, { "text": "药" },
+      { "text": "医生" }, { "text": "护士" }, { "text": "打针" }, { "text": "休息" }
+    ]
+  },
+  {
+    "id": "school-parent",
+    "title": "School & Parent",
+    "difficulty": "Beginner",
+    "dialectCode": "zh-CN",
+    "words": [
+      { "text": "老师" }, { "text": "学生" }, { "text": "作业" }, { "text": "考试" },
+      { "text": "课堂" }, { "text": "放学" }, { "text": "接送" }, { "text": "家长会" }
+    ]
+  },
+  {
+    "id": "daily-chores",
+    "title": "Daily Chores",
+    "difficulty": "Beginner",
+    "dialectCode": "zh-CN",
+    "words": [
+      { "text": "做饭" }, { "text": "打扫" }, { "text": "洗衣服" }, { "text": "扫地" },
+      { "text": "拖地" }, { "text": "倒垃圾" }, { "text": "叠衣服" }, { "text": "修理" }
+    ]
+  }
 ]

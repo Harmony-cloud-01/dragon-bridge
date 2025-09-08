@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { useI18n } from "@/components/i18n-provider"
 import { useEffect, useState } from "react"
 import { loadLessonLibrary } from "@/utils/lessons-lib"
+import { LessonsImporter } from "@/components/lessons-importer"
 
 const FALLBACK: Lesson[] = [
   {
@@ -52,6 +53,8 @@ export function LessonsSection({ onPracticeTone }: { onPracticeTone?: (example: 
   }, [])
   return (
     <div className="space-y-6">
+      <LessonsImporter onImported={() => loadLessonLibrary().then((lib) => lib.length && setLessons(lib))} />
+
       <Card>
         <CardHeader>
           <CardTitle>Lessons</CardTitle>

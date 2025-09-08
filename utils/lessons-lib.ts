@@ -7,6 +7,17 @@ let cache: Lesson[] | null = null
 
 export async function loadLessonLibrary(): Promise<Lesson[]> {
   if (cache) return cache
+  // Local override in localStorage (admin import)
+  try {
+    const raw = localStorage.getItem("lessons.library.override")
+    if (raw) {
+      const parsed = JSON.parse(raw) as Lesson[]
+      if (Array.isArray(parsed) && parsed.length) {
+        cache = parsed
+        return cache
+      }
+    }
+  } catch {}
   const url = withBasePath("/lessons.library.json")
   try {
     const res = await fetch(url, { cache: "force-cache" })
@@ -18,4 +29,3 @@ export async function loadLessonLibrary(): Promise<Lesson[]> {
   }
   return cache
 }
-
