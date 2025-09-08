@@ -40,6 +40,15 @@ const supportedDialects: DialectInfo[] = [
   { name: "江西话", code: "zh-CN-jiangxi", region: "Jiangxi", description: "Jiangxi dialect", available: true },
   { name: "湖南话", code: "zh-CN-hunan", region: "Hunan", description: "Hunan dialect", available: true },
   { name: "湖北话", code: "zh-CN-hubei", region: "Hubei", description: "Hubei dialect", available: true },
+  // Minority / regional extensions
+  { name: "科尔沁蒙古语", code: "mn-Khorchin", region: "内蒙古东部", description: "Khorchin Mongolian", available: true },
+  { name: "卫拉特蒙古语", code: "mn-Oirat", region: "新疆西部", description: "Oirat Mongolian", available: true },
+  { name: "布里亚特蒙古语", code: "mn-Buryat", region: "东北(巴尔嘎)", description: "Buryat Mongolian", available: true },
+  { name: "保安(东乡)语", code: "mn-Dongxiang", region: "甘肃/青海", description: "Dongxiang / Santa", available: true },
+  { name: "土族(蒙古尔)语", code: "mn-Monguor", region: "青海互助/民和", description: "Monguor (Tu)", available: true },
+  { name: "壮语(混合)", code: "za-Zhuang", region: "广西/贵州", description: "Zhuang–Mandarin code-switch", available: true },
+  { name: "彝汉混合", code: "ii-Yi", region: "云南", description: "Yi–Mandarin mixed speech", available: true },
+  { name: "满式东北话", code: "mnc-Manchu", region: "黑龙江", description: "Manchu-influenced NE Mandarin", available: true },
 ]
 
 const PREFERRED_VOICE_PATTERNS: Record<string, string[]> = {
@@ -55,6 +64,15 @@ const PREFERRED_VOICE_PATTERNS: Record<string, string[]> = {
   "zh-CN-jiangxi": ["Chinese", "Mandarin", "zh-CN", "Jiangxi"],
   "zh-CN-hunan": ["Chinese", "Mandarin", "zh-CN", "Hunan"],
   "zh-CN-hubei": ["Chinese", "Mandarin", "zh-CN", "Hubei"],
+  // Fallback patterns for minority / regional codes — map to Mandarin voices
+  "mn-Khorchin": ["Chinese", "Mandarin", "zh-CN", "Inner Mongolia", "Nei Mongol", "Khorchin"],
+  "mn-Oirat": ["Chinese", "Mandarin", "zh-CN", "Xinjiang", "Oirat"],
+  "mn-Buryat": ["Chinese", "Mandarin", "zh-CN", "Northeast", "Buryat"],
+  "mn-Dongxiang": ["Chinese", "Mandarin", "zh-CN", "Gansu", "Qinghai", "Dongxiang", "Santa"],
+  "mn-Monguor": ["Chinese", "Mandarin", "zh-CN", "Qinghai", "Monguor", "Tu"],
+  "za-Zhuang": ["Chinese", "Mandarin", "zh-CN", "Guangxi", "Zhuang"],
+  "ii-Yi": ["Chinese", "Mandarin", "zh-CN", "Yunnan", "Yi"],
+  "mnc-Manchu": ["Chinese", "Mandarin", "zh-CN", "Heilongjiang", "Manchu"],
 }
 
 export interface DialectContextType {
