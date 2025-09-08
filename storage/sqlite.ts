@@ -3,6 +3,7 @@
 import type { StorageEngine } from "./engine"
 import type { ActivityEvent } from "@/utils/activity-log"
 import type { SrsItem } from "@/types/srs"
+import type { Profile } from "@/utils/profile-storage"
 import { Capacitor } from "@capacitor/core"
 
 async function loadSQLite() {
@@ -46,6 +47,24 @@ export async function makeSQLiteEngine(): Promise<StorageEngine | null> {
         due INTEGER,
         addedAt INTEGER,
         history TEXT,
+        PRIMARY KEY (profile_id, key)
+      );
+    `)
+    await conn.execute(`
+      CREATE TABLE IF NOT EXISTS profiles (
+        id TEXT PRIMARY KEY,
+        name TEXT,
+        avatar TEXT,
+        createdAt INTEGER,
+        lastActiveAt INTEGER,
+        pinHash TEXT
+      );
+    `)
+    await conn.execute(`
+      CREATE TABLE IF NOT EXISTS settings (
+        profile_id TEXT NOT NULL,
+        key TEXT NOT NULL,
+        value TEXT,
         PRIMARY KEY (profile_id, key)
       );
     `)
@@ -130,6 +149,43 @@ export async function makeSQLiteEngine(): Promise<StorageEngine | null> {
       const conn = await ensureDb()
       const id = profileId ?? null
       await conn.run(`DELETE FROM srs_items WHERE profile_id = ? AND key = ?;`, [id, srsKey])
+    },
+    async profilesLoad() {
+      const conn = await ensureDb()
+      const res = await conn.query(`SELECT * FROM profiles ORDER BY createdAt ASC;`)
+      const rows: any[] = res?.values || []
+      return rows.map((r) => ({
+        id: r.id,
+        name: r.name,
+        avatar: r.avatar,
+        createdAt: Number(r.createdAt) || Date.now(),
+        lastActiveAt: Number(r.lastActiveAt) || Date.now(),
+        pinHash: r.pinHash ?? null,
+      })) as Profile[]
+    },
+    async profilesSave(list: Profile[]) {
+      const conn = await ensureDb()
+      await conn.run(`DELETE FROM profiles;`)
+      for (const p of list) {
+        await conn.run(
+          `INSERT INTO profiles (id, name, avatar, createdAt, lastActiveAt, pinHash) VALUES (?, ?, ?, ?, ?, ?);`,
+          [p.id, p.name, p.avatar, p.createdAt, p.lastActiveAt, p.pinHash ?? null]
+        )
+      }
+    },
+    async profilesGetCurrent() {
+      const conn = await ensureDb()
+      const res = await conn.query(`SELECT value FROM settings WHERE profile_id = 'GLOBAL' AND key = 'current';`)
+      const v = res?.values?.[0]?.value
+      return v ?? null
+    },
+    async profilesSetCurrent(id: string) {
+      const conn = await ensureDb()
+      const update = await conn.run(`UPDATE settings SET value=? WHERE profile_id='GLOBAL' AND key='current';`, [id])
+      const changes = update?.changes?.changes ?? update?.changes ?? 0
+      if (!changes) {
+        await conn.run(`INSERT INTO settings (profile_id, key, value) VALUES ('GLOBAL','current',?);`, [id])
+      }
     },
   }
 }

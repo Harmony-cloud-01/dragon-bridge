@@ -25,6 +25,8 @@ const MIGRATE_KEYS = [
   "ui.lang", // added to migrate UI language to profile scope
 ]
 
+import { getStorage } from "@/storage"
+
 export function getCurrentProfileId(): string | null {
   if (typeof window === "undefined") return null
   try {
@@ -39,13 +41,25 @@ export function setCurrentProfileId(id: string) {
   try {
     localStorage.setItem(LS_CURRENT, id)
   } catch {}
+  ;(async () => { try { const eng = await getStorage(); await eng.profilesSetCurrent(id) } catch {} })()
 }
 
 export function loadProfiles(): Profile[] {
   if (typeof window === "undefined") return []
   try {
     const raw = localStorage.getItem(LS_PROFILES)
-    return raw ? (JSON.parse(raw) as Profile[]) : []
+    const cached = raw ? (JSON.parse(raw) as Profile[]) : []
+    // async refresh from storage engine
+    ;(async () => {
+      try {
+        const eng = await getStorage()
+        const list = await eng.profilesLoad()
+        if (Array.isArray(list) && list.length) {
+          localStorage.setItem(LS_PROFILES, JSON.stringify(list))
+        }
+      } catch {}
+    })()
+    return cached
   } catch {
     return []
   }
@@ -56,6 +70,7 @@ export function saveProfiles(profiles: Profile[]) {
   try {
     localStorage.setItem(LS_PROFILES, JSON.stringify(profiles))
   } catch {}
+  ;(async () => { try { const eng = await getStorage(); await eng.profilesSave(profiles) } catch {} })()
 }
 
 export function scopedKey(base: string, profileId?: string | null) {

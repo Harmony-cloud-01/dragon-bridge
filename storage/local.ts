@@ -3,6 +3,7 @@
 import type { StorageEngine } from "./engine"
 import type { ActivityEvent } from "@/utils/activity-log"
 import type { SrsItem } from "@/types/srs"
+import type { Profile } from "@/utils/profile-storage"
 import { scopedKey } from "@/utils/profile-storage"
 
 const BASE_ACTIVITY = "activity.logs"
@@ -64,6 +65,25 @@ export function makeLocalEngine(): StorageEngine {
         delete map[srsKey]
         localStorage.setItem(key, JSON.stringify(map))
       } catch {}
+    },
+    async profilesLoad() {
+      if (typeof window === "undefined") return []
+      try {
+        const raw = localStorage.getItem('profile.list')
+        return raw ? (JSON.parse(raw) as Profile[]) : []
+      } catch { return [] }
+    },
+    async profilesSave(list: Profile[]) {
+      if (typeof window === "undefined") return
+      try { localStorage.setItem('profile.list', JSON.stringify(list)) } catch {}
+    },
+    async profilesGetCurrent() {
+      if (typeof window === "undefined") return null
+      try { return localStorage.getItem('profile.current') } catch { return null }
+    },
+    async profilesSetCurrent(id: string) {
+      if (typeof window === "undefined") return
+      try { localStorage.setItem('profile.current', id) } catch {}
     },
   }
 }

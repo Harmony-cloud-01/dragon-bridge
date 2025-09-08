@@ -1,0 +1,63 @@
+name: Android Release APK
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies (no frozen lockfile)
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Build web (static export)
+        run: pnpm run build
+
+      - name: Add Android platform + plugins
+        run: |
+          pnpm add -D @capacitor/android @capacitor-community/sqlite
+          pnpm run cap:add:android
+
+      - name: Inject Android permissions
+        run: pnpm run android:inject-perms
+
+      - name: Copy web into Android
+        run: pnpm run cap:copy
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Build debug APK
+        run: |
+          cd android
+          ./gradlew assembleDebug
+
+      - name: Upload APK to Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            android/app/build/outputs/apk/debug/app-debug.apk
+

@@ -9,6 +9,7 @@
     "lint": "next lint",
     "export": "next build",
     "lessons:build": "node scripts/generate_lessons.mjs",
+    "lessons:scan": "node scripts/scan_audio.mjs",
     "cap:init": "cap init 'Dragon Bridge' 'org.harmony.dragonbridge' -y",
     "cap:add:android": "cap add android",
     "cap:copy": "cap copy",

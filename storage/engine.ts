@@ -2,6 +2,7 @@
 
 import type { ActivityEvent } from "@/utils/activity-log"
 import type { SrsItem } from "@/types/srs"
+import type { Profile } from "@/utils/profile-storage"
 
 export interface StorageEngine {
   init(): Promise<void>
@@ -13,4 +14,9 @@ export interface StorageEngine {
   srsLoadAll(profileId?: string | null): Promise<Record<string, SrsItem>>
   srsUpsert(item: SrsItem, profileId?: string | null): Promise<void>
   srsRemove(key: string, profileId?: string | null): Promise<void>
+  // Profiles (optional async mirror)
+  profilesLoad(): Promise<Profile[]>
+  profilesSave(list: Profile[]): Promise<void>
+  profilesGetCurrent(): Promise<string | null>
+  profilesSetCurrent(id: string): Promise<void>
 }
