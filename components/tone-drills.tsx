@@ -11,6 +11,8 @@ import { isOffline } from "@/utils/offline"
 import { isLowRam } from "@/utils/device"
 import { useToast } from "@/hooks/use-toast"
 import { ToneVisualizer, SimpleToneStrip } from "@/components/tone-visualizer"
+import { getConsent, setConsent } from "@/stores/consent"
+import { Switch } from "@/components/ui/switch"
 
 type Tone = 1 | 2 | 3 | 4
 const TONE_NAMES: Record<Tone, string> = { 1: "High-flat", 2: "Rising", 3: "Fall-rise", 4: "Falling" }
@@ -24,6 +26,7 @@ export function ToneDrills() {
   const [syllable, setSyllable] = useState("ma")
   const [targetTone, setTargetTone] = useState<Tone>(1)
   const [score, setScore] = useState({ correct: 0, total: 0 })
+  const [consent, setConsentState] = useState<boolean>(false)
 
   // Mic visualization (energy bar)
   const [micActive, setMicActive] = useState(false)
@@ -34,6 +37,8 @@ export function ToneDrills() {
   const srcRef = useRef<MediaStreamAudioSourceNode | null>(null)
 
   useEffect(() => {
+    // hydrate consent on mount
+    setConsentState(getConsent())
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current)
       if (audioCtxRef.current) audioCtxRef.current.close().catch(() => {})
@@ -61,6 +66,11 @@ export function ToneDrills() {
   const startMic = async () => {
     if (micActive) return
     try {
+      if (!consent) {
+        // require explicit consent toggle before mic
+        toast({ title: "Permission required", description: "Enable mic analysis in settings below." })
+        return
+      }
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
       const src = ctx.createMediaStreamSource(stream)
@@ -135,6 +145,17 @@ export function ToneDrills() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="flex items-center justify-center gap-3 text-sm">
+            <span>Enable mic analysis (consent)</span>
+            <Switch
+              checked={consent}
+              onCheckedChange={(v) => {
+                setConsentState(v)
+                setConsent(v)
+              }}
+              aria-label="Enable mic analysis"
+            />
+          </div>
           {isLowRam ? (
             <SimpleToneStrip />
           ) : null}

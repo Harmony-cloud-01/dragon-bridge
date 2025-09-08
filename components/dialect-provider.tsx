@@ -29,6 +29,13 @@ const supportedDialects: DialectInfo[] = [
   { name: "河南话", code: "zh-CN-henan", region: "Henan", description: "Henan dialect", available: true },
   { name: "山东话", code: "zh-CN-shandong", region: "Shandong", description: "Shandong dialect", available: true },
   { name: "陕西话", code: "zh-CN-shaanxi", region: "Shaanxi", description: "Shaanxi dialect", available: true },
+  // Extra (Phase 5)
+  { name: "山西话", code: "zh-CN-shanxi", region: "Shanxi", description: "Shanxi dialect", available: true },
+  { name: "河北话", code: "zh-CN-hebei", region: "Hebei", description: "Hebei dialect", available: true },
+  { name: "安徽话", code: "zh-CN-anhui", region: "Anhui", description: "Anhui dialect", available: true },
+  { name: "江西话", code: "zh-CN-jiangxi", region: "Jiangxi", description: "Jiangxi dialect", available: true },
+  { name: "湖南话", code: "zh-CN-hunan", region: "Hunan", description: "Hunan dialect", available: true },
+  { name: "湖北话", code: "zh-CN-hubei", region: "Hubei", description: "Hubei dialect", available: true },
 ]
 
 const PREFERRED_VOICE_PATTERNS: Record<string, string[]> = {
@@ -38,6 +45,12 @@ const PREFERRED_VOICE_PATTERNS: Record<string, string[]> = {
   "zh-CN-henan": ["Chinese", "Mandarin", "zh-CN", "Henan"],
   "zh-CN-shandong": ["Chinese", "Mandarin", "zh-CN", "Shandong"],
   "zh-CN-shaanxi": ["Chinese", "Mandarin", "zh-CN", "Shaanxi"],
+  "zh-CN-shanxi": ["Chinese", "Mandarin", "zh-CN", "Shanxi"],
+  "zh-CN-hebei": ["Chinese", "Mandarin", "zh-CN", "Hebei"],
+  "zh-CN-anhui": ["Chinese", "Mandarin", "zh-CN", "Anhui"],
+  "zh-CN-jiangxi": ["Chinese", "Mandarin", "zh-CN", "Jiangxi"],
+  "zh-CN-hunan": ["Chinese", "Mandarin", "zh-CN", "Hunan"],
+  "zh-CN-hubei": ["Chinese", "Mandarin", "zh-CN", "Hubei"],
 }
 
 export interface DialectContextType {
