@@ -8,6 +8,8 @@ import { getConsent, setConsent } from "@/stores/consent"
 import { getPreferLocalAudio, setPreferLocalAudio } from "@/stores/settings"
 import { isLowRam, isLowCpu } from "@/utils/device"
 import { isOffline, onOfflineChange } from "@/utils/offline"
+import { ActivityLogView } from "./activity-log-view"
+import { LessonsValidator } from "./lessons-validator"
 
 export function AppSettings() {
   const { t } = useI18n()
@@ -73,7 +75,9 @@ export function AppSettings() {
           <div>Low CPU heuristic: <span className="font-mono">{String(isLowCpu)}</span></div>
         </CardContent>
       </Card>
+
+      <ActivityLogView />
+      <LessonsValidator />
     </div>
   )
 }
-
