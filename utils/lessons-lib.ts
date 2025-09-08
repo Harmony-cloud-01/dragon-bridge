@@ -29,3 +29,7 @@ export async function loadLessonLibrary(): Promise<Lesson[]> {
   }
   return cache
 }
+
+export function clearLessonCache() {
+  cache = null
+}

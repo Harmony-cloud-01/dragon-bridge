@@ -8,6 +8,7 @@ import { getConsent, setConsent } from "@/stores/consent"
 import { getPreferLocalAudio, setPreferLocalAudio } from "@/stores/settings"
 import { isLowRam, isLowCpu } from "@/utils/device"
 import { isOffline, onOfflineChange } from "@/utils/offline"
+import { clearLessonCache } from "@/utils/lessons-lib"
 import { ActivityLogView } from "./activity-log-view"
 import { LessonsValidator } from "./lessons-validator"
 import { SrsViewer } from "./srs-viewer"
@@ -91,6 +92,28 @@ export function AppSettings() {
               onCheckedChange={(v) => { setPrefState(v); setPreferLocalAudio(v) }}
               aria-label="Prefer pre-recorded audio"
             />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Library & Cache</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2 text-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="font-medium">Clear lesson library override</div>
+              <div className="text-stone-600">Removes locally imported lessons so the default library is used.</div>
+            </div>
+            <Button size="sm" variant="outline" onClick={() => { localStorage.removeItem("lessons.library.override"); clearLessonCache() }}>Clear</Button>
+          </div>
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="font-medium">Clear lesson loader cache</div>
+              <div className="text-stone-600">Forces re-fetch of lessons.library.json next time.</div>
+            </div>
+            <Button size="sm" variant="outline" onClick={() => { clearLessonCache() }}>Clear</Button>
           </div>
         </CardContent>
       </Card>

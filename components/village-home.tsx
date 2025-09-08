@@ -5,6 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Map, Store, BookOpen, Users, CalendarDays, Headphones, Settings, Activity, Repeat, ShoppingBasket, Bell, GraduationCap } from 'lucide-react'
+import { useEffect, useState } from "react"
+import { loadLessonLibrary } from "@/utils/lessons-lib"
+import { LessonCard, type Lesson } from "@/components/lesson-card"
 import { useI18n } from "./i18n-provider"
 import { useBasePath } from "./BasePathProvider" // Add this import
 
@@ -15,6 +18,14 @@ type VillageHomeProps = {
 export function VillageHome({ onNavigate = () => {} }: VillageHomeProps) {
   const { t } = useI18n()
   const { withBasePath } = useBasePath() // Add this hook
+  const [featured, setFeatured] = useState<Record<string, Lesson[]>>({})
+
+  useEffect(() => {
+    loadLessonLibrary().then((lib) => {
+      const pick = (tag: string) => lib.filter((l) => (l.tags || []).includes(tag)).slice(0, 2)
+      setFeatured({ market: pick("market"), farm: pick("farm"), greetings: pick("greetings") })
+    })
+  }, [])
 
   const places = [
     {
@@ -200,6 +211,27 @@ export function VillageHome({ onNavigate = () => {} }: VillageHomeProps) {
           {t("farmCalendar")}
         </Button>
       </div>
+
+      {/* Featured lessons preview */}
+      {(featured.market?.length || featured.farm?.length || featured.greetings?.length) && (
+        <div className="space-y-3">
+          <h3 className="text-lg font-semibold">Featured Lessons</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div>
+              <div className="text-sm text-stone-600 mb-1">Market</div>
+              {featured.market?.map((l) => <LessonCard key={l.id} lesson={l} />)}
+            </div>
+            <div>
+              <div className="text-sm text-stone-600 mb-1">Farm</div>
+              {featured.farm?.map((l) => <LessonCard key={l.id} lesson={l} />)}
+            </div>
+            <div>
+              <div className="text-sm text-stone-600 mb-1">Greetings</div>
+              {featured.greetings?.map((l) => <LessonCard key={l.id} lesson={l} />)}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
