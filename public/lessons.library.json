@@ -228,5 +228,433 @@
       "home",
       "chores"
     ]
+  },
+  {
+    "id": "numbers-basics",
+    "title": "Numbers Basics",
+    "difficulty": "Beginner",
+    "dialectCode": "zh-CN",
+    "tags": [
+      "numbers",
+      "daily"
+    ],
+    "words": [
+      {
+        "text": "零"
+      },
+      {
+        "text": "一"
+      },
+      {
+        "text": "二"
+      },
+      {
+        "text": "三"
+      },
+      {
+        "text": "四"
+      },
+      {
+        "text": "五"
+      },
+      {
+        "text": "六"
+      },
+      {
+        "text": "七"
+      },
+      {
+        "text": "八"
+      },
+      {
+        "text": "九"
+      },
+      {
+        "text": "十"
+      },
+      {
+        "text": "百"
+      },
+      {
+        "text": "千"
+      }
+    ]
+  },
+  {
+    "id": "weather-basics",
+    "title": "Weather Basics",
+    "difficulty": "Beginner",
+    "dialectCode": "zh-CN",
+    "tags": [
+      "weather",
+      "daily"
+    ],
+    "words": [
+      {
+        "text": "天气"
+      },
+      {
+        "text": "下雨"
+      },
+      {
+        "text": "下雪"
+      },
+      {
+        "text": "刮风"
+      },
+      {
+        "text": "晴天"
+      },
+      {
+        "text": "多云"
+      },
+      {
+        "text": "阴天"
+      },
+      {
+        "text": "热"
+      },
+      {
+        "text": "冷"
+      },
+      {
+        "text": "凉快"
+      },
+      {
+        "text": "潮湿"
+      },
+      {
+        "text": "干燥"
+      }
+    ]
+  },
+  {
+    "id": "directions-advanced",
+    "title": "Directions Advanced",
+    "difficulty": "Intermediate",
+    "dialectCode": "zh-CN",
+    "tags": [
+      "travel",
+      "directions"
+    ],
+    "words": [
+      {
+        "text": "左转"
+      },
+      {
+        "text": "右转"
+      },
+      {
+        "text": "直走"
+      },
+      {
+        "text": "路口"
+      },
+      {
+        "text": "红绿灯"
+      },
+      {
+        "text": "向前"
+      },
+      {
+        "text": "向后"
+      },
+      {
+        "text": "旁边"
+      },
+      {
+        "text": "对面"
+      },
+      {
+        "text": "附近"
+      },
+      {
+        "text": "远"
+      },
+      {
+        "text": "近"
+      }
+    ]
+  },
+  {
+    "id": "family",
+    "title": "Family & People",
+    "difficulty": "Beginner",
+    "dialectCode": "zh-CN",
+    "tags": [
+      "family",
+      "daily"
+    ],
+    "words": [
+      {
+        "text": "爸爸"
+      },
+      {
+        "text": "妈妈"
+      },
+      {
+        "text": "孩子"
+      },
+      {
+        "text": "爷爷"
+      },
+      {
+        "text": "奶奶"
+      },
+      {
+        "text": "叔叔"
+      },
+      {
+        "text": "阿姨"
+      },
+      {
+        "text": "老师"
+      },
+      {
+        "text": "同学"
+      },
+      {
+        "text": "朋友"
+      }
+    ]
+  },
+  {
+    "id": "emergency",
+    "title": "Emergency & Help",
+    "difficulty": "Beginner",
+    "dialectCode": "zh-CN",
+    "tags": [
+      "emergency",
+      "clinic"
+    ],
+    "words": [
+      {
+        "text": "帮忙"
+      },
+      {
+        "text": "救命"
+      },
+      {
+        "text": "报警"
+      },
+      {
+        "text": "医院"
+      },
+      {
+        "text": "药店"
+      },
+      {
+        "text": "危险"
+      },
+      {
+        "text": "迷路"
+      },
+      {
+        "text": "疼"
+      },
+      {
+        "text": "摔倒"
+      }
+    ]
+  },
+  {
+    "id": "food-basics",
+    "title": "Food & Eating",
+    "difficulty": "Beginner",
+    "dialectCode": "zh-CN",
+    "tags": [
+      "food",
+      "market"
+    ],
+    "words": [
+      {
+        "text": "米饭"
+      },
+      {
+        "text": "面条"
+      },
+      {
+        "text": "鸡蛋"
+      },
+      {
+        "text": "牛肉"
+      },
+      {
+        "text": "猪肉"
+      },
+      {
+        "text": "鱼"
+      },
+      {
+        "text": "蔬菜"
+      },
+      {
+        "text": "水果"
+      },
+      {
+        "text": "辣"
+      },
+      {
+        "text": "甜"
+      },
+      {
+        "text": "咸"
+      },
+      {
+        "text": "酸"
+      }
+    ]
+  },
+  {
+    "id": "tools-advanced",
+    "title": "Tools (Advanced)",
+    "difficulty": "Intermediate",
+    "dialectCode": "zh-CN",
+    "tags": [
+      "tools",
+      "farm"
+    ],
+    "words": [
+      {
+        "text": "扳手"
+      },
+      {
+        "text": "螺丝刀"
+      },
+      {
+        "text": "钳子"
+      },
+      {
+        "text": "锯子"
+      },
+      {
+        "text": "锤子"
+      },
+      {
+        "text": "电钻"
+      },
+      {
+        "text": "梯子"
+      },
+      {
+        "text": "绳子"
+      },
+      {
+        "text": "油漆"
+      },
+      {
+        "text": "钉子"
+      }
+    ]
+  },
+  {
+    "id": "clinic-phrases",
+    "title": "Clinic Phrases",
+    "difficulty": "Beginner",
+    "dialectCode": "zh-CN",
+    "tags": [
+      "clinic",
+      "health",
+      "phrases"
+    ],
+    "words": [
+      {
+        "text": "我不舒服"
+      },
+      {
+        "text": "哪里疼"
+      },
+      {
+        "text": "量体温"
+      },
+      {
+        "text": "看看"
+      },
+      {
+        "text": "吃药"
+      },
+      {
+        "text": "休息一下"
+      },
+      {
+        "text": "要不要打针"
+      }
+    ]
+  },
+  {
+    "id": "school-phrases",
+    "title": "School Phrases",
+    "difficulty": "Beginner",
+    "dialectCode": "zh-CN",
+    "tags": [
+      "school",
+      "phrases"
+    ],
+    "words": [
+      {
+        "text": "上课"
+      },
+      {
+        "text": "下课"
+      },
+      {
+        "text": "请安静"
+      },
+      {
+        "text": "举手"
+      },
+      {
+        "text": "作业交了没"
+      },
+      {
+        "text": "明天考试"
+      },
+      {
+        "text": "加油"
+      }
+    ]
+  },
+  {
+    "id": "renting-building",
+    "title": "Renting & Building",
+    "difficulty": "Intermediate",
+    "dialectCode": "zh-CN",
+    "tags": [
+      "home",
+      "build",
+      "rent"
+    ],
+    "words": [
+      {
+        "text": "租房"
+      },
+      {
+        "text": "合同"
+      },
+      {
+        "text": "押金"
+      },
+      {
+        "text": "维修"
+      },
+      {
+        "text": "水电"
+      },
+      {
+        "text": "泥沙"
+      },
+      {
+        "text": "水泥"
+      },
+      {
+        "text": "砖"
+      },
+      {
+        "text": "瓦"
+      },
+      {
+        "text": "木板"
+      }
+    ]
   }
 ]

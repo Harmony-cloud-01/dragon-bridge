@@ -6,7 +6,7 @@ import { useState } from "react"
 
 export function LessonsImporter({ onImported }: { onImported?: () => void }) {
   const [status, setStatus] = useState<string>("")
-  const [url, setUrl] = useState<string>("")
+  const [url, setUrl] = useState<string>(process.env.NEXT_PUBLIC_LESSONS_URL || "https://raw.githubusercontent.com/Harmony-cloud-01/dragon-bridge/main/public/lessons.library.json")
   const importFile = async (file: File) => {
     try {
       const text = await file.text()
@@ -53,6 +53,7 @@ export function LessonsImporter({ onImported }: { onImported?: () => void }) {
             onChange={(e) => setUrl(e.target.value)}
           />
           <Button size="sm" onClick={loadFromUrl}>Load from URL</Button>
+          <Button size="sm" variant="outline" onClick={() => setUrl("https://raw.githubusercontent.com/Harmony-cloud-01/dragon-bridge/main/public/lessons.library.json")}>Use default</Button>
         </div>
         <input
           type="file"
