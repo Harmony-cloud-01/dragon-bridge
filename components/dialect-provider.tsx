@@ -2,10 +2,12 @@
 // Lightweight debounce to avoid pulling lodash-es for a single helper
 function debounce<T extends (...args: any[]) => void>(fn: T, wait = 500) {
   let t: any
-  return (...args: any[]) => {
+  function debounced(this: any, ...args: any[]) {
     clearTimeout(t)
-    t = setTimeout(() => fn(...args), wait)
+    t = setTimeout(() => fn.apply(this, args), wait)
   }
+  ;(debounced as any).cancel = () => clearTimeout(t)
+  return debounced as T & { cancel: () => void }
 }
 import {
   createContext,
