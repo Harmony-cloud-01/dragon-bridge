@@ -13,6 +13,8 @@ import {
 import { useToast } from "@/hooks/use-toast"
 import { logEvent } from "@/utils/activity-log"
 import { scopedKey } from "@/utils/profile-storage"
+import { isOffline } from "@/utils/offline"
+import { findAudioFor, preloadLessons } from "@/utils/lessons"
 
 export interface DialectInfo {
   name: string
@@ -104,6 +106,8 @@ export function DialectProvider({ children }: DialectProviderProps) {
     const supported = typeof window !== "undefined" && "speechSynthesis" in window
     setSpeechSupported(supported)
     setIsMobile(/Mobi|Android/i.test(navigator.userAgent))
+    // Warm lessons cache for offline mapping
+    preloadLessons()
   }, [])
 
   useEffect(() => {
@@ -239,6 +243,30 @@ export function DialectProvider({ children }: DialectProviderProps) {
         return
       }
       stopAudio()
+      // Offline preference: try baked audio if available
+      if (isOffline()) {
+        const url = await findAudioFor(text, dialectCode)
+        if (url) {
+          // temporarily override path-based player to use explicit URL
+          stopAudio()
+          const audio = new Audio(url)
+          audioElRef.current = audio
+          audio.onerror = () => {
+            stopAudio()
+            toast({ title: "Audio unavailable", description: "No recording available for this phrase" })
+          }
+          audio.onended = () => stopAudio()
+          setIsPlaying(true)
+          setCurrentlyPlaying(text)
+          setCurrentDialect(dialectCode)
+          logEvent({ type: "audio.play", text, dialect: dialectCode, t: Date.now() })
+          try { await audio.play() } catch { stopAudio() }
+          return
+        } else {
+          toast({ title: "Offline", description: "Audio not cached for this phrase" })
+          return
+        }
+      }
       if (!speechSupported) return playWithAudioTag(text, dialectCode)
       setIsPlaying(true)
       setCurrentlyPlaying(text)
