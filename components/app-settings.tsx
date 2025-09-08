@@ -10,6 +10,7 @@ import { isLowRam, isLowCpu } from "@/utils/device"
 import { isOffline, onOfflineChange } from "@/utils/offline"
 import { ActivityLogView } from "./activity-log-view"
 import { LessonsValidator } from "./lessons-validator"
+import { SrsViewer } from "./srs-viewer"
 
 export function AppSettings() {
   const { t } = useI18n()
@@ -78,6 +79,7 @@ export function AppSettings() {
 
       <ActivityLogView />
       <LessonsValidator />
+      <SrsViewer />
     </div>
   )
 }

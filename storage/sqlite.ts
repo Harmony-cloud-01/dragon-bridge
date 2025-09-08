@@ -187,5 +187,21 @@ export async function makeSQLiteEngine(): Promise<StorageEngine | null> {
         await conn.run(`INSERT INTO settings (profile_id, key, value) VALUES ('GLOBAL','current',?);`, [id])
       }
     },
+    async settingsGet(key: string, profileId?: string | null) {
+      const conn = await ensureDb()
+      const id = profileId ?? 'GLOBAL'
+      const res = await conn.query(`SELECT value FROM settings WHERE profile_id = ? AND key = ?;`, [id, key])
+      const v = res?.values?.[0]?.value
+      return v ?? null
+    },
+    async settingsSet(key: string, value: string, profileId?: string | null) {
+      const conn = await ensureDb()
+      const id = profileId ?? 'GLOBAL'
+      const update = await conn.run(`UPDATE settings SET value=? WHERE profile_id=? AND key=?;`, [value, id, key])
+      const changes = update?.changes?.changes ?? update?.changes ?? 0
+      if (!changes) {
+        await conn.run(`INSERT INTO settings (profile_id, key, value) VALUES (?,?,?);`, [id, key, value])
+      }
+    },
   }
 }

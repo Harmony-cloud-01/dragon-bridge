@@ -85,5 +85,13 @@ export function makeLocalEngine(): StorageEngine {
       if (typeof window === "undefined") return
       try { localStorage.setItem('profile.current', id) } catch {}
     },
+    async settingsGet(key: string, profileId?: string | null) {
+      if (typeof window === "undefined") return null
+      try { return localStorage.getItem(scopedKey(key, profileId ?? undefined)) } catch { return null }
+    },
+    async settingsSet(key: string, value: string, profileId?: string | null) {
+      if (typeof window === "undefined") return
+      try { localStorage.setItem(scopedKey(key, profileId ?? undefined), value) } catch {}
+    },
   }
 }

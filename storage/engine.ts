@@ -19,4 +19,7 @@ export interface StorageEngine {
   profilesSave(list: Profile[]): Promise<void>
   profilesGetCurrent(): Promise<string | null>
   profilesSetCurrent(id: string): Promise<void>
+  // Key-value settings (profile scoped)
+  settingsGet(key: string, profileId?: string | null): Promise<string | null>
+  settingsSet(key: string, value: string, profileId?: string | null): Promise<void>
 }
