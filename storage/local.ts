@@ -2,6 +2,7 @@
 
 import type { StorageEngine } from "./engine"
 import type { ActivityEvent } from "@/utils/activity-log"
+import type { SrsItem } from "@/types/srs"
 import { scopedKey } from "@/utils/profile-storage"
 
 const BASE_ACTIVITY = "activity.logs"
@@ -36,6 +37,33 @@ export function makeLocalEngine(): StorageEngine {
         localStorage.removeItem(key)
       } catch {}
     },
+    async srsLoadAll(profileId?: string | null) {
+      if (typeof window === "undefined") return {}
+      try {
+        const key = scopedKey("srs.items", profileId ?? undefined)
+        const raw = localStorage.getItem(key)
+        return raw ? (JSON.parse(raw) as Record<string, SrsItem>) : {}
+      } catch { return {} }
+    },
+    async srsUpsert(item: SrsItem, profileId?: string | null) {
+      if (typeof window === "undefined") return
+      const key = scopedKey("srs.items", profileId ?? undefined)
+      try {
+        const raw = localStorage.getItem(key)
+        const map: Record<string, SrsItem> = raw ? JSON.parse(raw) : {}
+        map[item.key] = item
+        localStorage.setItem(key, JSON.stringify(map))
+      } catch {}
+    },
+    async srsRemove(srsKey: string, profileId?: string | null) {
+      if (typeof window === "undefined") return
+      const key = scopedKey("srs.items", profileId ?? undefined)
+      try {
+        const raw = localStorage.getItem(key)
+        const map: Record<string, SrsItem> = raw ? JSON.parse(raw) : {}
+        delete map[srsKey]
+        localStorage.setItem(key, JSON.stringify(map))
+      } catch {}
+    },
   }
 }
-

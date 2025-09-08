@@ -1,6 +1,7 @@
 "use client"
 
 import type { ActivityEvent } from "@/utils/activity-log"
+import type { SrsItem } from "@/types/srs"
 
 export interface StorageEngine {
   init(): Promise<void>
@@ -8,5 +9,8 @@ export interface StorageEngine {
   logEvent(ev: ActivityEvent, profileId?: string | null): Promise<void>
   readEvents(profileId?: string | null): Promise<ActivityEvent[]>
   clearEvents(profileId?: string | null): Promise<void>
+  // SRS
+  srsLoadAll(profileId?: string | null): Promise<Record<string, SrsItem>>
+  srsUpsert(item: SrsItem, profileId?: string | null): Promise<void>
+  srsRemove(key: string, profileId?: string | null): Promise<void>
 }
-

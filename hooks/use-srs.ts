@@ -1,23 +1,9 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { scopedKey } from "@/utils/profile-storage"
 import { logEvent } from "@/utils/activity-log"
-
-export type SrsItemType = "word" | "phrase" | "character"
-export type SrsGrade = "again" | "hard" | "good" | "easy"
-
-export interface SrsItem {
-  key: string // unique key (e.g., word:玉米)
-  text: string // Chinese text for playback
-  type: SrsItemType
-  box: number // 1..5
-  due: number // timestamp ms
-  addedAt: number
-  history: { t: number; grade: SrsGrade }[]
-}
-
-const BASE_SRS = "srs.items"
+import type { SrsItem, SrsGrade, SrsItemType } from "@/types/srs"
+import { getStorage, currentProfileId } from "@/storage"
 
 // Intervals per box in days
 const BOX_INTERVALS_DAYS = [0, 1, 3, 7, 16, 30] // 0th unused; box 1..5
@@ -29,38 +15,30 @@ function nextDue(box: number) {
 
 export function useSrs() {
   const [items, setItems] = useState<Record<string, SrsItem>>({})
-  const storageKey = scopedKey(BASE_SRS)
 
   // hydrate
   useEffect(() => {
-    if (typeof window === "undefined") return
-    try {
-      const raw = localStorage.getItem(storageKey)
-      if (raw) setItems(JSON.parse(raw))
-      else setItems({})
-    } catch {
-      setItems({})
-    }
-  // re-hydrate whenever the storageKey changes (i.e., profile switched)
-  }, [storageKey])
-
-  // persist
-  useEffect(() => {
-    if (typeof window === "undefined") return
-    try {
-      localStorage.setItem(storageKey, JSON.stringify(items))
-    } catch {}
-  }, [items, storageKey])
+    (async () => {
+      try {
+        const eng = await getStorage()
+        const map = await eng.srsLoadAll(currentProfileId())
+        setItems(map)
+      } catch {
+        setItems({})
+      }
+    })()
+  }, [])
 
   // rehydrate on profile change event (additional safety)
   useEffect(() => {
     const onProfileChange = () => {
-      try {
-        const raw = localStorage.getItem(scopedKey(BASE_SRS))
-        setItems(raw ? JSON.parse(raw) : {})
-      } catch {
-        setItems({})
-      }
+      ;(async () => {
+        try {
+          const eng = await getStorage()
+          const map = await eng.srsLoadAll(currentProfileId())
+          setItems(map)
+        } catch { setItems({}) }
+      })()
     }
     window.addEventListener("profile:changed", onProfileChange)
     return () => window.removeEventListener("profile:changed", onProfileChange)
@@ -80,7 +58,10 @@ export function useSrs() {
         addedAt: Date.now(),
         history: [],
       }
-      // Activity log for adding to SRS
+      // persist via storage (fire and forget)
+      ;(async () => {
+        try { const eng = await getStorage(); await eng.srsUpsert(it, currentProfileId()) } catch {}
+      })()
       logEvent({ type: "srs.add", key, t: Date.now() })
       return { ...prev, [key]: it }
     })
@@ -90,6 +71,8 @@ export function useSrs() {
     setItems((prev) => {
       const cp = { ...prev }
       delete cp[key]
+      // persist
+      ;(async () => { try { const eng = await getStorage(); await eng.srsRemove(key, currentProfileId()) } catch {} })()
       return cp
     })
   }, [])
@@ -109,6 +92,7 @@ export function useSrs() {
         due: nextDue(newBox),
         history: [...it.history, { t: Date.now(), grade }],
       }
+      ;(async () => { try { const eng = await getStorage(); await eng.srsUpsert(updated, currentProfileId()) } catch {} })()
       return { ...prev, [key]: updated }
     })
   }, [])

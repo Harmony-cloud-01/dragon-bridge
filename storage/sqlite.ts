@@ -2,6 +2,7 @@
 
 import type { StorageEngine } from "./engine"
 import type { ActivityEvent } from "@/utils/activity-log"
+import type { SrsItem } from "@/types/srs"
 import { Capacitor } from "@capacitor/core"
 
 async function loadSQLite() {
@@ -33,6 +34,19 @@ export async function makeSQLiteEngine(): Promise<StorageEngine | null> {
         type TEXT,
         payload TEXT,
         t INTEGER
+      );
+    `)
+    await conn.execute(`
+      CREATE TABLE IF NOT EXISTS srs_items (
+        profile_id TEXT NOT NULL,
+        key TEXT NOT NULL,
+        text TEXT,
+        type TEXT,
+        box INTEGER,
+        due INTEGER,
+        addedAt INTEGER,
+        history TEXT,
+        PRIMARY KEY (profile_id, key)
       );
     `)
     return db
@@ -70,6 +84,52 @@ export async function makeSQLiteEngine(): Promise<StorageEngine | null> {
       const conn = await ensureDb()
       if (profileId) await conn.run(`DELETE FROM activity_logs WHERE profile_id = ?;`, [profileId])
       else await conn.run(`DELETE FROM activity_logs;`)
+    },
+    async srsLoadAll(profileId?: string | null) {
+      const conn = await ensureDb()
+      const id = profileId ?? null
+      const res = await conn.query(
+        id ? `SELECT * FROM srs_items WHERE profile_id = ?;` : `SELECT * FROM srs_items;`,
+        id ? [id] : []
+      )
+      const rows: any[] = res?.values || []
+      const out: Record<string, SrsItem> = {}
+      for (const r of rows) {
+        try {
+          out[r.key] = {
+            key: r.key,
+            text: r.text,
+            type: r.type,
+            box: Number(r.box) || 1,
+            due: Number(r.due) || Date.now(),
+            addedAt: Number(r.addedAt) || Date.now(),
+            history: r.history ? JSON.parse(r.history) : [],
+          }
+        } catch {}
+      }
+      return out
+    },
+    async srsUpsert(item: SrsItem, profileId?: string | null) {
+      const conn = await ensureDb()
+      const id = profileId ?? null
+      // naive upsert: try update, if no row updated then insert
+      const history = JSON.stringify(item.history || [])
+      const update = await conn.run(
+        `UPDATE srs_items SET text=?, type=?, box=?, due=?, addedAt=?, history=? WHERE profile_id=? AND key=?;`,
+        [item.text, item.type, item.box, item.due, item.addedAt, history, id, item.key]
+      )
+      const changes = update?.changes?.changes ?? update?.changes ?? 0
+      if (!changes) {
+        await conn.run(
+          `INSERT INTO srs_items (profile_id, key, text, type, box, due, addedAt, history) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`,
+          [id, item.key, item.text, item.type, item.box, item.due, item.addedAt, history]
+        )
+      }
+    },
+    async srsRemove(srsKey: string, profileId?: string | null) {
+      const conn = await ensureDb()
+      const id = profileId ?? null
+      await conn.run(`DELETE FROM srs_items WHERE profile_id = ? AND key = ?;`, [id, srsKey])
     },
   }
 }
