@@ -17,6 +17,12 @@ Live: https://harmony-cloud-01.github.io/dragon-bridge/
 
 ---
 
+## How To Use
+
+- See docs/how_to_use.md for quick steps on Lessons, SRS, Tone Drills, AI Teacher, and Android packaging.
+
+---
+
 ## Install & Run (local)
 
 ```bash
