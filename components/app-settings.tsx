@@ -34,6 +34,24 @@ export function AppSettings() {
 
   return (
     <div className="space-y-6">
+      <Card className="border-emerald-200 bg-emerald-50">
+        <CardContent className="p-4 text-sm text-emerald-900">
+          This is a HarmonyOnline release. It is open‑source and free for use.
+          For more info, updates, or to report a bug, visit
+          {" "}
+          <a
+            href="https://harmonyonline.org"
+            target="_blank"
+            rel="noreferrer"
+            className="underline underline-offset-2"
+            aria-label="HarmonyOnline.org website"
+          >
+            HarmonyOnline.org
+          </a>
+          .
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle>Audio and Privacy</CardTitle>
