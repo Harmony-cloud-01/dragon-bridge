@@ -45,15 +45,52 @@ const FALLBACK: Lesson[] = [
 export function LessonsSection({ onPracticeTone }: { onPracticeTone?: (example: string) => void }) {
   const { t } = useI18n()
   const [lessons, setLessons] = useState<Lesson[]>(FALLBACK)
+  const [tag, setTag] = useState<string | null>(null)
 
   useEffect(() => {
     loadLessonLibrary().then((lib) => {
       if (lib.length) setLessons(lib)
     })
   }, [])
+
+  // Preselect tag if set by village navigation
+  useEffect(() => {
+    try {
+      const preset = localStorage.getItem("lessons.filter")
+      if (preset) setTag(preset)
+    } catch {}
+  }, [])
+
+  useEffect(() => {
+    try {
+      if (tag) localStorage.setItem("lessons.filter", tag)
+      else localStorage.removeItem("lessons.filter")
+    } catch {}
+  }, [tag])
+
+  const allTags = Array.from(new Set(lessons.flatMap((l) => l.tags || [])))
+  const filtered = tag ? lessons.filter((l) => (l.tags || []).includes(tag)) : lessons
   return (
     <div className="space-y-6">
       <LessonsImporter onImported={() => loadLessonLibrary().then((lib) => lib.length && setLessons(lib))} />
+
+      {allTags.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Filter</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-wrap gap-2 text-sm">
+            <Button size="sm" variant={tag === null ? "default" : "outline"} onClick={() => setTag(null)}>
+              All
+            </Button>
+            {allTags.map((tname) => (
+              <Button key={tname} size="sm" variant={tag === tname ? "default" : "outline"} onClick={() => setTag(tname)}>
+                #{tname}
+              </Button>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>
@@ -61,7 +98,7 @@ export function LessonsSection({ onPracticeTone }: { onPracticeTone?: (example: 
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {lessons.map((lesson) => (
+            {filtered.map((lesson) => (
               <LessonCard
                 key={lesson.id}
                 lesson={lesson}

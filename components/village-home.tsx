@@ -154,7 +154,20 @@ export function VillageHome({ onNavigate = () => {} }: VillageHomeProps) {
         {places.map((p) => (
           <button
             key={p.id}
-            onClick={() => onNavigate(p.id)}
+            onClick={() => {
+              // Preselect relevant lessons filter for certain places
+              try {
+                if (p.id === "dialect-vocabulary") localStorage.setItem("lessons.filter", "market")
+                else if (p.id === "vocabulary") localStorage.setItem("lessons.filter", "farm")
+                else if (p.id === "dialect-phrases") localStorage.setItem("lessons.filter", "greetings")
+              } catch {}
+              // Route to lessons for those places
+              if (p.id === "dialect-vocabulary" || p.id === "vocabulary" || p.id === "dialect-phrases") {
+                onNavigate("lessons")
+              } else {
+                onNavigate(p.id)
+              }
+            }}
             className={`text-left rounded-lg border ${p.color} transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400`}
             aria-label={`${t(p.titleKey)} - ${t(p.subtitleKey)}`}
           >
