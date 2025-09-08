@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { useToast } from "@/hooks/use-toast"
 import { useSrs } from "@/hooks/use-srs"
 
 export type Lesson = {
@@ -15,8 +16,10 @@ export type Lesson = {
 
 export function LessonCard({ lesson, onPractice }: { lesson: Lesson; onPractice?: (l: Lesson) => void }) {
   const { addItem } = useSrs()
+  const { toast } = useToast()
   const addAll = () => {
     lesson.words.forEach((w) => addItem(w.text, "word"))
+    toast({ title: "Added to SRS", description: `Queued ${lesson.words.length} items.` })
   }
   return (
     <Card className="h-full">

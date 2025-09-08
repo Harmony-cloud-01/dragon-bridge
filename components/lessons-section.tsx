@@ -115,7 +115,9 @@ export function LessonsSection({ onPracticeTone }: { onPracticeTone?: (example: 
                 lesson={lesson}
                 onPractice={(l) => {
                   try { localStorage.setItem("lessons.current", JSON.stringify(l)) } catch {}
-                  onPracticeTone?.(l.words[0]?.text || "你好")
+                  const ex = l.words[0]?.text || "你好"
+                  try { localStorage.setItem("tone.practice.text", ex) } catch {}
+                  onPracticeTone?.(ex)
                 }}
               />
             ))}

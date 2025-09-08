@@ -22,12 +22,13 @@ const DEFAULT_SYLLABLES = ["ma", "ba", "da", "la"]
 
 export function ToneDrills() {
   const { t } = useI18n()
-  const { playPronunciation, isPlaying } = useDialect()
+  const { playPronunciation, playWithToneDisplay, isPlaying } = useDialect()
   const { toast } = useToast()
   const [syllable, setSyllable] = useState("ma")
   const [targetTone, setTargetTone] = useState<Tone>(1)
   const [score, setScore] = useState({ correct: 0, total: 0 })
   const [consent, setConsentState] = useState<boolean>(false)
+  const [externalText, setExternalText] = useState<string | null>(null)
 
   // Mic visualization (energy bar)
   const [micActive, setMicActive] = useState(false)
@@ -38,8 +39,12 @@ export function ToneDrills() {
   const srcRef = useRef<MediaStreamAudioSourceNode | null>(null)
 
   useEffect(() => {
-    // hydrate consent on mount
+    // hydrate consent on mount + external practice text
     setConsentState(getConsent())
+    try {
+      const ex = localStorage.getItem("tone.practice.text")
+      setExternalText(ex || null)
+    } catch {}
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current)
       if (audioCtxRef.current) audioCtxRef.current.close().catch(() => {})
@@ -146,6 +151,20 @@ export function ToneDrills() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {externalText && (
+            <div className="rounded border p-3 bg-sky-50">
+              <div className="flex items-center justify-between">
+                <div className="text-sm">
+                  <span className="font-medium mr-2">Practice:</span>
+                  <span className="font-mono">{externalText}</span>
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={() => playPronunciation(externalText)} disabled={isPlaying}>Play</Button>
+                  <Button size="sm" variant="outline" onClick={() => playWithToneDisplay(externalText)} disabled={isPlaying}>Play + Visualize</Button>
+                </div>
+              </div>
+            </div>
+          )}
           <div className="flex items-center justify-center gap-3 text-sm">
             <span>Enable mic analysis (consent)</span>
             <Switch
