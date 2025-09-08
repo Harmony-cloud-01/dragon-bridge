@@ -10,6 +10,7 @@ export function TonePlayer({ text, dialectCode = "zh-CN" }: { text: string; dial
   const { playWithToneDisplay, isPlaying, currentlyPlaying } = useDialect()
   const [activeIndex, setActiveIndex] = useState(-1)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [toneCount, setToneCount] = useState<number>(0)
 
   useEffect(() => {
     if (currentlyPlaying === text) {
@@ -25,6 +26,18 @@ export function TonePlayer({ text, dialectCode = "zh-CN" }: { text: string; dial
     }
   }, [currentlyPlaying, text])
 
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const ev = e as CustomEvent
+      if (!ev?.detail) return
+      if (ev.detail.text !== text) return
+      const arr = Array.isArray(ev.detail.analysis) ? ev.detail.analysis : []
+      setToneCount(arr.length)
+    }
+    window.addEventListener("tone:analysis", handler as any)
+    return () => window.removeEventListener("tone:analysis", handler as any)
+  }, [text])
+
   const handlePlay = async () => {
     setIsAnalyzing(true)
     try {
@@ -37,6 +50,9 @@ export function TonePlayer({ text, dialectCode = "zh-CN" }: { text: string; dial
   return (
     <div className="space-y-4 p-4 border rounded-lg">
       <ToneVisualizer text={text} activeIndex={activeIndex} />
+      {toneCount > 0 && (
+        <p className="text-center text-xs text-stone-500">Analyzed {toneCount} segments</p>
+      )}
       <div className="flex justify-center">
         <Button onClick={handlePlay} disabled={isPlaying || isAnalyzing} size="sm">
           {isAnalyzing ? (
@@ -57,4 +73,3 @@ export function TonePlayer({ text, dialectCode = "zh-CN" }: { text: string; dial
     </div>
   )
 }
-

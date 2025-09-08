@@ -82,6 +82,9 @@ export function DialectSelector() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {supportedDialects.length === 0 && (
+              <div className="text-sm text-stone-600">No dialects available.</div>
+            )}
             {supportedDialects.map((dialect) => (
               <Card
                 key={dialect.code}

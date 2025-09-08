@@ -16,6 +16,7 @@ import { scopedKey } from "@/utils/profile-storage"
 import { isOffline } from "@/utils/offline"
 import { findAudioFor, preloadLessons } from "@/utils/lessons"
 import { getPreferLocalAudio } from "@/stores/settings"
+import { analyzeTones } from "@/lib/tones"
 
 export interface DialectInfo {
   name: string
@@ -339,8 +340,16 @@ current.onerror = function(e: SpeechSynthesisErrorEvent) {
 
   const playWithToneDisplay = useCallback(
     async (text: string, dialectCode = "zh-CN") => {
+      // Start analysis first, then play, then emit results
+      const analysisPromise = analyzeTones(text).catch(() => null)
       await playPronunciation(text, dialectCode)
-      logEvent({ type: "tone.analysis", text, dialect: dialectCode, t:Date.now() })
+      const analysis = await analysisPromise
+      logEvent({ type: "tone.analysis", text, dialect: dialectCode, t: Date.now() })
+      try {
+        if (analysis) {
+          window.dispatchEvent(new CustomEvent("tone:analysis", { detail: { text, dialectCode, analysis } }))
+        }
+      } catch {}
     },
     [playPronunciation]
   )
