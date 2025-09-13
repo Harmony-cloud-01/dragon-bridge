@@ -1,4 +1,4 @@
-name: Android Release APK
+name: Android Release
 
 on:
   push:
@@ -50,7 +50,7 @@ jobs:
         uses: android-actions/setup-android@v3
 
       - name: Prepare signing (optional)
-        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+        if: env.HAS_KEYSTORE != ''
         run: |
           mkdir -p android/keystore
           echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > android/keystore/release.keystore
@@ -59,33 +59,42 @@ jobs:
           echo "MYAPP_UPLOAD_STORE_PASSWORD=$ANDROID_KEYSTORE_PASSWORD" >> android/gradle.properties
           echo "MYAPP_UPLOAD_KEY_PASSWORD=$ANDROID_KEY_PASSWORD" >> android/gradle.properties
         env:
+          HAS_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
 
       - name: Build release APK (if signing configured)
-        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+        if: env.HAS_KEYSTORE != ''
         run: |
           cd android
           ./gradlew assembleRelease
+        env:
+          HAS_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
 
       - name: Build debug APK (fallback)
-        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 == '' }}
+        if: env.HAS_KEYSTORE == ''
         run: |
           cd android
           ./gradlew assembleDebug
+        env:
+          HAS_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
 
       - name: Upload APK to Release (release)
         uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/') && secrets.ANDROID_KEYSTORE_BASE64 != ''
+        if: startsWith(github.ref, 'refs/tags/') && env.HAS_KEYSTORE != ''
         with:
           files: |
             android/app/build/outputs/apk/release/app-release.apk
+        env:
+          HAS_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
 
       - name: Upload APK to Release (debug)
         uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/') && secrets.ANDROID_KEYSTORE_BASE64 == ''
+        if: startsWith(github.ref, 'refs/tags/') && env.HAS_KEYSTORE == ''
         with:
           files: |
             android/app/build/outputs/apk/debug/app-debug.apk
+        env:
+          HAS_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
