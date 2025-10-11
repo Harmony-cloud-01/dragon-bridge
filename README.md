@@ -177,3 +177,16 @@ Issues can be filed using the templates in `.github/ISSUE_TEMPLATE/` to help mai
 MIT © 2025 HarmonyOnline.org / Harmony-cloud-01
 
 See [LICENSE](./LICENSE) for full terms.
+
+---
+
+## Harmony Cloud Review Repository
+
+To download the review materials shared via OneDrive and create a local Git
+repository, run the helper script:
+
+```bash
+./scripts/setup-onedrive-repo.sh
+```
+
+Additional details are available in [docs/local-repo-setup.md](docs/local-repo-setup.md).
