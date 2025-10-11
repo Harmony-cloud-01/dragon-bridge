@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Project documentation
+    url: https://harmony-cloud-01.github.io/dragon-bridge/
+    about: Review the published docs before filing a new issue.
