@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- Comprehensive linting, formatting, and Git hook tooling with ESLint, Prettier, Husky, and lint-staged.
+- Vitest configuration with initial unit coverage for shared utilities.
+- Continuous integration workflow covering install, lint, and test steps.
+- Documentation updates describing development standards, testing, and contribution guidelines.
+- GitHub issue and pull request templates plus Dependabot configuration for automated dependency updates.
+
 ## 2.0.0 – Dragon Bridge (PWA + Android)
 
 Major release focused on offline‑first learning, rural device guards, lesson library, and Android packaging.
