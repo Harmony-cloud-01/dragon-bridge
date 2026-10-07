@@ -2,32 +2,49 @@
 
 import { scopedKey } from "@/utils/profile-storage"
 import { getStorage, currentProfileId } from "@/storage"
+import { reportStorageFailure } from "@/storage/failure"
 
 const LS_CONSENT = "privacy.voiceConsent"
+// An explicit choice stays authoritative for this session, even when persistence
+// is unavailable or an older background read resolves after a revocation.
+const sessionChoices = new Map<string, boolean>()
 
 export function getConsent(): boolean {
   if (typeof window === "undefined") return false
+  const profileId = currentProfileId()
+  const key = scopedKey(LS_CONSENT, profileId)
+  if (sessionChoices.has(key)) return sessionChoices.get(key)!
   try {
-    const v = localStorage.getItem(scopedKey(LS_CONSENT))
-    // async refresh from storage engine
+    const cached = localStorage.getItem(key)
     ;(async () => {
-      try { 
+      try {
         const eng = await getStorage()
-        const stored = await eng.settingsGet(LS_CONSENT, currentProfileId())
-        if (stored != null) localStorage.setItem(scopedKey(LS_CONSENT), stored)
+        const stored = await eng.settingsGet(LS_CONSENT, profileId)
+        if (stored == null || sessionChoices.has(key)) return
+        try { localStorage.setItem(key, stored) } catch {}
+        if (currentProfileId() === profileId && stored !== cached) {
+          window.dispatchEvent(new CustomEvent("consent:changed", { detail: stored === "true" }))
+        }
       } catch {}
     })()
-    return v === "true"
+    return cached === "true"
   } catch {
     return false
   }
 }
 
-export function setConsent(v: boolean) {
+export function setConsent(value: boolean) {
   if (typeof window === "undefined") return
-  try {
-    localStorage.setItem(scopedKey(LS_CONSENT), String(v))
-    window.dispatchEvent(new CustomEvent("consent:changed", { detail: v }))
-  } catch {}
-  ;(async () => { try { const eng = await getStorage(); await eng.settingsSet(LS_CONSENT, String(v), currentProfileId()) } catch {} })()
+  const profileId = currentProfileId()
+  const key = scopedKey(LS_CONSENT, profileId)
+  sessionChoices.set(key, value)
+  try { localStorage.setItem(key, String(value)) } catch { reportStorageFailure("save microphone consent") }
+  // Revocation is immediate and must not depend on a successful storage write.
+  window.dispatchEvent(new CustomEvent("consent:changed", { detail: value }))
+  ;(async () => {
+    try {
+      const eng = await getStorage()
+      await eng.settingsSet(LS_CONSENT, String(value), profileId)
+    } catch { reportStorageFailure("save microphone consent") }
+  })()
 }

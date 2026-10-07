@@ -27,18 +27,14 @@ export function LessonCard({ lesson, onPractice }: { lesson: Lesson; onPractice?
     const it = items[`word:${w.text}`]
     return acc + (it && it.due <= now ? 1 : 0)
   }, 0)
-  const addAll = () => {
-    lesson.words.forEach((w) => addItem(w.text, "word"))
-    toast({ title: "Added to SRS", description: `Queued ${lesson.words.length} items.` })
+  const addWords = async (words: { text: string }[]) => {
+    const results = await Promise.all(words.map((word) => addItem(word.text, "word")))
+    const saved = results.filter(Boolean).length
+    if (saved === words.length) toast({ title: "Added to SRS", description: `Saved ${saved} items.` })
+    // A failed operation already shows an actionable storage warning.
   }
-  const addSelected = () => {
-    const count = Array.from(selected).reduce((acc, i) => {
-      const w = lesson.words[i]
-      if (w) { addItem(w.text, "word"); return acc + 1 }
-      return acc
-    }, 0)
-    toast({ title: "Added selected", description: `Queued ${count} items.` })
-  }
+  const addAll = () => addWords(lesson.words)
+  const addSelected = () => addWords(Array.from(selected).map((i) => lesson.words[i]).filter(Boolean))
   const toggle = (i: number) => {
     setSelected((prev) => {
       const next = new Set(prev)

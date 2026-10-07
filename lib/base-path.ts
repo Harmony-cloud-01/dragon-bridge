@@ -4,7 +4,7 @@ export const getBasePath = (): string => {
     // If running inside a Capacitor native shell, use relative paths
     // to load assets from the embedded bundle.
     const anyWin = window as any
-    if (anyWin?.Capacitor?.isNativePlatform) {
+    if (typeof anyWin?.Capacitor?.isNativePlatform === 'function' && anyWin.Capacitor.isNativePlatform()) {
       return ''
     }
     if (window.location.hostname.includes('github.io')) {
@@ -18,8 +18,9 @@ export const getBasePath = (): string => {
 
 export const withBasePath = (path: string): string => {
   const basePath = getBasePath();
-  if (path.startsWith(basePath)) {
-    return path;
+  const absolutePath = path.startsWith('/') ? path : '/' + path;
+  if (!basePath || absolutePath === basePath || absolutePath.startsWith(`${basePath}/`)) {
+    return absolutePath;
   }
-  return `${basePath}${path.startsWith('/') ? path : '/' + path}`;
+  return `${basePath}${absolutePath}`;
 };

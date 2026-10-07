@@ -98,3 +98,11 @@ cd android && ./gradlew assembleDebug
 MIT © 2025 HarmonyOnline.org / Harmony-cloud-01
 
 See [LICENSE](./LICENSE) for full terms.
+
+## Reliability regression checks
+
+With Node 24 and the project dependencies installed, run `npm test`,
+`npm run typecheck`, and `npm run build`. The dependency-free Node test runner
+uses mocked storage/media APIs and never requests microphone access. See
+[the first-pass verification notes](docs/reliability-first-pass.md) and
+[audio coverage and device checks](docs/audio-playback.md) for remaining gates.

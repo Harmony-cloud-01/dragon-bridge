@@ -26,6 +26,7 @@ const MIGRATE_KEYS = [
 ]
 
 import { getStorage } from "@/storage"
+import { reportStorageFailure } from "@/storage/failure"
 
 export function getCurrentProfileId(): string | null {
   if (typeof window === "undefined") return null
@@ -40,8 +41,8 @@ export function setCurrentProfileId(id: string) {
   if (typeof window === "undefined") return
   try {
     localStorage.setItem(LS_CURRENT, id)
-  } catch {}
-  ;(async () => { try { const eng = await getStorage(); await eng.profilesSetCurrent(id) } catch {} })()
+  } catch { reportStorageFailure("save the active profile") }
+  ;(async () => { try { const eng = await getStorage(); await eng.profilesSetCurrent(id) } catch { reportStorageFailure("save the active profile") } })()
 }
 
 export function loadProfiles(): Profile[] {
@@ -69,12 +70,12 @@ export function saveProfiles(profiles: Profile[]) {
   if (typeof window === "undefined") return
   try {
     localStorage.setItem(LS_PROFILES, JSON.stringify(profiles))
-  } catch {}
-  ;(async () => { try { const eng = await getStorage(); await eng.profilesSave(profiles) } catch {} })()
+  } catch { reportStorageFailure("save profiles") }
+  ;(async () => { try { const eng = await getStorage(); await eng.profilesSave(profiles) } catch { reportStorageFailure("save profiles") } })()
 }
 
 export function scopedKey(base: string, profileId?: string | null) {
-  const id = profileId ?? getCurrentProfileId()
+  const id = profileId === undefined ? getCurrentProfileId() : profileId
   return id ? `${base}::${id}` : base
 }
 

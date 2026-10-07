@@ -1,14 +1,16 @@
 "use client"
 
-import { useMemo, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useSrs } from "@/hooks/use-srs"
+import { reportStorageFailure } from "@/storage/failure"
+import type { ActivityEvent } from "@/utils/activity-log"
 import { readEvents, clearEvents } from "@/utils/activity-log"
 import { Download, FileJson, FileSpreadsheet, Upload } from 'lucide-react'
 import { useProfile } from "./profile-provider"
-import { scopedKey } from "@/utils/profile-storage"
+import { exportProfileBackup, importProfileBackup } from "@/utils/profile-backup"
 
 function toCSV(rows: string[][]) {
   return rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n")
@@ -28,9 +30,27 @@ function downloadBlob(name: string, content: string, type = "text/plain") {
 
 export function TeacherMode() {
   const { allItems, dueItems } = useSrs()
-  const events = useMemo(() => readEvents(), [])
+  const [events, setEvents] = useState<ActivityEvent[]>([])
   const fileRef = useRef<HTMLInputElement | null>(null)
+  const backupBusy = useRef(false)
+  const [backupPending, setBackupPending] = useState(false)
   const { current } = useProfile()
+  useEffect(() => {
+    let active = true
+    let version = 0
+    const refresh = async () => {
+      const request = ++version
+      try {
+        const list = await readEvents(current?.id ?? null)
+        if (active && request === version) setEvents(list)
+      } catch { if (active) reportStorageFailure("load activity") }
+    }
+    setEvents([])
+    void refresh()
+    window.addEventListener("activity:updated", refresh)
+    return () => { active = false; window.removeEventListener("activity:updated", refresh) }
+  }, [current?.id])
+
 
   const srsCSV = () => {
     const rows: string[][] = [
@@ -68,72 +88,39 @@ export function TeacherMode() {
     downloadBlob("session-report.json", JSON.stringify(data, null, 2), "application/json")
   }
 
-  const readLocal = (key: string) => {
+  const exportProfileJSON = async () => {
+    if (backupBusy.current) return
+    const profile = current ? { id: current.id, name: current.name, avatar: current.avatar } : null
+    backupBusy.current = true
+    setBackupPending(true)
     try {
-      const raw = localStorage.getItem(key)
-      return raw ? JSON.parse(raw) : null
-    } catch {
-      return null
+      const payload = await exportProfileBackup(profile)
+      const name = profile ? `profile-${profile.name}-${profile.id}.json` : "profile-export.json"
+      downloadBlob(name, JSON.stringify(payload, null, 2), "application/json")
+    } catch (error) {
+      alert(`Export failed: ${error instanceof Error ? error.message : "Could not read profile data"}`)
+    } finally {
+      backupBusy.current = false
+      setBackupPending(false)
     }
-  }
-  const writeLocal = (key: string, value: any) => {
-    try {
-      localStorage.setItem(key, typeof value === "string" ? value : JSON.stringify(value))
-    } catch {}
-  }
-
-  const exportProfileJSON = () => {
-    const payload = {
-      exportedAt: new Date().toISOString(),
-      profile: current ? { id: current.id, name: current.name, avatar: current.avatar } : null,
-      data: {
-        srs: readLocal(scopedKey("srs.items")),
-        activity: readLocal(scopedKey("activity.logs")),
-        reminders: readLocal(scopedKey("daily.reminder.config")),
-        dialect: {
-          selectedDialects: readLocal(scopedKey("dialect.selectedDialects")),
-          playbackRate: readLocal(scopedKey("dialect.playbackRate")),
-          preferredVoice: readLocal(scopedKey("dialect.preferredVoice")),
-        },
-        uiLang: readLocal(scopedKey("ui.lang")), // include UI language per profile
-      },
-      version: 2,
-    }
-    const name = current ? `profile-${current.name}-${current.id}.json` : "profile-export.json"
-    downloadBlob(name, JSON.stringify(payload, null, 2), "application/json")
   }
 
   const importProfileJSON = async (file: File) => {
+    if (backupBusy.current) return
+    // File reading and native storage can take time; retain the initiating profile.
+    const profileId = current?.id ?? null
+    const profileName = current?.name ?? "the default profile"
+    backupBusy.current = true
+    setBackupPending(true)
     try {
-      const txt = await file.text()
-      const json = JSON.parse(txt)
-      if (!json || typeof json !== "object") throw new Error("Invalid JSON")
-      // import into CURRENT profile scope
-      if (json?.data?.srs) writeLocal(scopedKey("srs.items"), json.data.srs)
-      if (json?.data?.activity) writeLocal(scopedKey("activity.logs"), json.data.activity)
-      if (json?.data?.reminders) writeLocal(scopedKey("daily.reminder.config"), json.data.reminders)
-      if (json?.data?.dialect) {
-        if (json.data.dialect.selectedDialects) writeLocal(scopedKey("dialect.selectedDialects"), json.data.dialect.selectedDialects)
-        if (json.data.dialect.playbackRate) writeLocal(scopedKey("dialect.playbackRate"), json.data.dialect.playbackRate)
-        if (json.data.dialect.preferredVoice !== undefined) {
-          if (json.data.dialect.preferredVoice === null) localStorage.removeItem(scopedKey("dialect.preferredVoice"))
-          else writeLocal(scopedKey("dialect.preferredVoice"), json.data.dialect.preferredVoice)
-        }
-      }
-      if (json?.data?.uiLang !== undefined) {
-        // ui.lang may be a string or JSON string, normalize to string
-        if (typeof json.data.uiLang === "string") {
-          writeLocal(scopedKey("ui.lang"), json.data.uiLang)
-        } else {
-          writeLocal(scopedKey("ui.lang"), json.data.uiLang)
-        }
-      }
-      // Notify interested hooks
-      window.dispatchEvent(new Event("profile:changed"))
-      window.dispatchEvent(new Event("activity:updated"))
-      alert("Profile data imported successfully into current profile.")
-    } catch (e: any) {
-      alert(`Import failed: ${e?.message ?? "Unknown error"}`)
+      const json = JSON.parse(await file.text())
+      await importProfileBackup(json, profileId)
+      alert(`Profile data imported successfully into ${profileName}.`)
+    } catch (error) {
+      alert(`Import failed: ${error instanceof Error ? error.message : "Could not import profile data"}`)
+    } finally {
+      backupBusy.current = false
+      setBackupPending(false)
     }
   }
 
@@ -173,7 +160,7 @@ export function TeacherMode() {
           <div className="border-t pt-4 space-y-3">
             <div className="text-sm font-medium">Per-Profile Export/Import</div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Button onClick={exportProfileJSON} className="flex items-center gap-2">
+              <Button disabled={backupPending} onClick={exportProfileJSON} className="flex items-center gap-2">
                 <FileJson className="h-4 w-4" />
                 Export Current Profile (JSON)
               </Button>
@@ -181,6 +168,7 @@ export function TeacherMode() {
                 <input
                   ref={fileRef}
                   type="file"
+                  disabled={backupPending}
                   accept="application/json"
                   className="hidden"
                   onChange={(e) => {
@@ -189,19 +177,19 @@ export function TeacherMode() {
                     if (fileRef.current) fileRef.current.value = ""
                   }}
                 />
-                <Button variant="outline" className="flex items-center gap-2" onClick={() => fileRef.current?.click()}>
+                <Button disabled={backupPending} variant="outline" className="flex items-center gap-2" onClick={() => fileRef.current?.click()}>
                   <Upload className="h-4 w-4" />
                   Import JSON into Current Profile
                 </Button>
               </div>
             </div>
             <div className="text-xs text-gray-500">
-              Import will overwrite SRS items, activity logs, reminders, dialect preferences, and UI language for the current profile.
+              Import replaces included SRS items, activity logs, reminders, dialect preferences, and UI language for the selected profile. Preferences remain in local storage on web and native.
             </div>
           </div>
 
           <div className="text-xs text-gray-500">
-            Note: activity events currently log SRS grades and some audio plays. You can clear events in your browser storage.
+            Note: activity events currently log SRS grades and some audio plays. Use Clear Activity Events below to clear this profile’s activity.
           </div>
           <div>
             <Button variant="ghost" onClick={() => clearEvents()}>Clear Activity Events</Button>
