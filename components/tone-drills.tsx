@@ -1,19 +1,19 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { useDialect } from "@/hooks/use-dialect"
 import { useI18n } from "./i18n-provider"
 import { Mic, Volume2, Waves, Sparkles } from 'lucide-react'
 import { isOffline } from "@/utils/offline"
 import { isLowRam } from "@/utils/device"
 import { useToast } from "@/hooks/use-toast"
-import { ToneVisualizer, SimpleToneStrip } from "@/components/tone-visualizer"
+import { SimpleToneStrip } from "@/components/tone-visualizer"
 import { TonePlayer } from "@/components/tones/TonePlayer"
 import { getConsent, setConsent } from "@/stores/consent"
 import { Switch } from "@/components/ui/switch"
+import { createMicrophoneSession, type MicrophoneState } from "@/utils/microphone-session"
 
 type Tone = 1 | 2 | 3 | 4
 const TONE_NAMES: Record<Tone, string> = { 1: "High-flat", 2: "Rising", 3: "Fall-rise", 4: "Falling" }
@@ -33,16 +33,36 @@ export function ToneDrills() {
   const queueTimerRef = useRef<number | null>(null)
 
   // Mic visualization (energy bar)
-  const [micActive, setMicActive] = useState(false)
+  const [micState, setMicState] = useState<MicrophoneState>("idle")
+  const consentRef = useRef(false)
+  const micSessionRef = useRef<ReturnType<typeof createMicrophoneSession> | null>(null)
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
-  const audioCtxRef = useRef<AudioContext | null>(null)
-  const analyserRef = useRef<AnalyserNode | null>(null)
-  const rafRef = useRef<number | null>(null)
-  const srcRef = useRef<MediaStreamAudioSourceNode | null>(null)
 
   useEffect(() => {
-    // hydrate consent on mount + external practice text
-    setConsentState(getConsent())
+    const session = createMicrophoneSession({
+      canStart: () => consentRef.current,
+      getUserMedia: () => navigator.mediaDevices.getUserMedia({ audio: true }),
+      createAudioContext: () => new (window.AudioContext || (window as any).webkitAudioContext)(),
+      requestAnimationFrame: (callback) => requestAnimationFrame(callback),
+      cancelAnimationFrame: (handle) => cancelAnimationFrame(handle),
+      renderFrame: (analyser) => drawWaveform(canvasRef.current, analyser),
+      onStateChange: setMicState,
+    })
+    micSessionRef.current = session
+    const updateConsent = (value: boolean) => {
+      consentRef.current = value
+      setConsentState(value)
+      if (!value) session.stop()
+    }
+    const onConsentChanged = (event: Event) => updateConsent((event as CustomEvent<boolean>).detail === true)
+    const onProfileChanged = () => {
+      // A profile switch always ends the old profile's capture, even if both consent.
+      session.stop()
+      updateConsent(getConsent())
+    }
+    window.addEventListener("consent:changed", onConsentChanged)
+    window.addEventListener("profile:changed", onProfileChanged)
+    updateConsent(getConsent())
     try {
       const ex = localStorage.getItem("tone.practice.text")
       setExternalText(ex || null)
@@ -50,8 +70,10 @@ export function ToneDrills() {
       setQueue(q ? JSON.parse(q) : null)
     } catch {}
     return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current)
-      if (audioCtxRef.current) audioCtxRef.current.close().catch(() => {})
+      window.removeEventListener("consent:changed", onConsentChanged)
+      window.removeEventListener("profile:changed", onProfileChanged)
+      session.dispose()
+      micSessionRef.current = null
       if (queueTimerRef.current) window.clearTimeout(queueTimerRef.current)
     }
   }, [])
@@ -75,72 +97,18 @@ export function ToneDrills() {
   }
 
   const startMic = async () => {
-    if (micActive) return
+    if (!consentRef.current) {
+      toast({ title: "Permission required", description: "Enable mic analysis in settings below." })
+      return
+    }
     try {
-      if (!consent) {
-        // require explicit consent toggle before mic
-        toast({ title: "Permission required", description: "Enable mic analysis in settings below." })
-        return
-      }
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
-      const src = ctx.createMediaStreamSource(stream)
-      const analyser = ctx.createAnalyser()
-      analyser.fftSize = 2048
-      src.connect(analyser)
-      audioCtxRef.current = ctx
-      analyserRef.current = analyser
-      srcRef.current = src
-      setMicActive(true)
-      draw()
-    } catch (e) {
-      console.warn("Mic permission denied", e)
+      await micSessionRef.current?.start()
+    } catch (error) {
+      console.warn("Mic could not start", error)
     }
   }
 
-  const stopMic = () => {
-    setMicActive(false)
-    if (rafRef.current) cancelAnimationFrame(rafRef.current)
-    try {
-      srcRef.current?.mediaStream.getTracks().forEach((t) => t.stop())
-    } catch {}
-    if (audioCtxRef.current) audioCtxRef.current.close().catch(() => {})
-    audioCtxRef.current = null
-    analyserRef.current = null
-    srcRef.current = null
-  }
-
-  const draw = () => {
-    const canvas = canvasRef.current
-    const analyser = analyserRef.current
-    if (!canvas || !analyser) return
-    const ctx = canvas.getContext("2d")
-    if (!ctx) return
-
-    const bufferLength = analyser.fftSize
-    const dataArray = new Uint8Array(bufferLength)
-
-    const render = () => {
-      analyser.getByteTimeDomainData(dataArray)
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
-      ctx.fillStyle = "#f1f5f9"
-      ctx.fillRect(0, 0, canvas.width, canvas.height)
-      ctx.strokeStyle = "#0ea5a4"
-      ctx.lineWidth = 2
-      ctx.beginPath()
-      const slice = canvas.width / bufferLength
-      for (let i = 0; i < bufferLength; i++) {
-        const x = i * slice
-        const v = dataArray[i] / 128.0
-        const y = (v * canvas.height) / 2
-        if (i === 0) ctx.moveTo(x, y)
-        else ctx.lineTo(x, y)
-      }
-      ctx.stroke()
-      rafRef.current = requestAnimationFrame(render)
-    }
-    render()
-  }
+  const stopMic = () => micSessionRef.current?.stop()
 
   const clearQueue = () => {
     setQueue(null)
@@ -214,7 +182,9 @@ export function ToneDrills() {
             <Switch
               checked={consent}
               onCheckedChange={(v) => {
+                consentRef.current = v
                 setConsentState(v)
+                if (!v) stopMic()
                 setConsent(v)
               }}
               aria-label="Enable mic analysis"
@@ -279,13 +249,13 @@ export function ToneDrills() {
             Listen, then press Start and say the syllable with the target tone. The waveform shows your voice energy.
           </p>
           <div className="flex justify-center gap-2">
-            {!micActive ? (
+            {micState === "idle" ? (
               <Button onClick={startMic} className="flex items-center gap-2">
                 <Waves className="h-4 w-4" /> Start Mic
               </Button>
             ) : (
               <Button onClick={stopMic} variant="outline" className="flex items-center gap-2">
-                <Sparkles className="h-4 w-4" /> Stop Mic
+                <Sparkles className="h-4 w-4" /> {micState === "starting" ? "Cancel Mic" : "Stop Mic"}
               </Button>
             )}
           </div>
@@ -321,4 +291,28 @@ function markTone(base: string, tone: Tone) {
   }
   const choices = map[base] || map["ma"]
   return choices[tone - 1]
+}
+
+function drawWaveform(canvas: HTMLCanvasElement | null, analyser: AnalyserNode) {
+  if (!canvas) return false
+  const ctx = canvas.getContext("2d")
+  if (!ctx) return false
+  const bufferLength = analyser.fftSize
+  const dataArray = new Uint8Array(bufferLength)
+  analyser.getByteTimeDomainData(dataArray)
+  ctx.clearRect(0, 0, canvas.width, canvas.height)
+  ctx.fillStyle = "#f1f5f9"
+  ctx.fillRect(0, 0, canvas.width, canvas.height)
+  ctx.strokeStyle = "#0ea5a4"
+  ctx.lineWidth = 2
+  ctx.beginPath()
+  const slice = canvas.width / bufferLength
+  for (let i = 0; i < bufferLength; i++) {
+    const x = i * slice
+    const y = (dataArray[i] / 128.0 * canvas.height) / 2
+    if (i === 0) ctx.moveTo(x, y)
+    else ctx.lineTo(x, y)
+  }
+  ctx.stroke()
+  return true
 }

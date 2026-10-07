@@ -6,92 +6,82 @@ import type { SrsItem } from "@/types/srs"
 import type { Profile } from "@/utils/profile-storage"
 import { scopedKey } from "@/utils/profile-storage"
 
-const BASE_ACTIVITY = "activity.logs"
+function readArray<T>(key: string): T[] {
+  const raw = localStorage.getItem(key)
+  if (raw === null) return []
+  const value = JSON.parse(raw)
+  if (!Array.isArray(value)) throw new Error(`Invalid stored list: ${key}`)
+  return value
+}
 
+function readSrs(key: string): Record<string, SrsItem> {
+  const raw = localStorage.getItem(key)
+  if (raw === null) return {}
+  const value = JSON.parse(raw)
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error(`Invalid stored SRS: ${key}`)
+  return value
+}
+
+// Storage exceptions must reach callers: a quota/permission error is not a saved change.
 export function makeLocalEngine(): StorageEngine {
   return {
     async init() {},
     async logEvent(ev: ActivityEvent, profileId?: string | null) {
       if (typeof window === "undefined") return
-      try {
-        const key = scopedKey(BASE_ACTIVITY, profileId ?? undefined)
-        const raw = localStorage.getItem(key)
-        const arr: ActivityEvent[] = raw ? JSON.parse(raw) : []
-        arr.push(ev)
-        localStorage.setItem(key, JSON.stringify(arr))
-      } catch {}
+      const key = scopedKey("activity.logs", profileId)
+      const events = readArray<ActivityEvent>(key)
+      events.push(ev)
+      localStorage.setItem(key, JSON.stringify(events))
     },
     async readEvents(profileId?: string | null) {
       if (typeof window === "undefined") return []
-      try {
-        const key = scopedKey(BASE_ACTIVITY, profileId ?? undefined)
-        const raw = localStorage.getItem(key)
-        return raw ? (JSON.parse(raw) as ActivityEvent[]) : []
-      } catch {
-        return []
-      }
+      return readArray<ActivityEvent>(scopedKey("activity.logs", profileId))
     },
     async clearEvents(profileId?: string | null) {
       if (typeof window === "undefined") return
-      try {
-        const key = scopedKey(BASE_ACTIVITY, profileId ?? undefined)
-        localStorage.removeItem(key)
-      } catch {}
+      localStorage.removeItem(scopedKey("activity.logs", profileId))
     },
     async srsLoadAll(profileId?: string | null) {
       if (typeof window === "undefined") return {}
-      try {
-        const key = scopedKey("srs.items", profileId ?? undefined)
-        const raw = localStorage.getItem(key)
-        return raw ? (JSON.parse(raw) as Record<string, SrsItem>) : {}
-      } catch { return {} }
+      return readSrs(scopedKey("srs.items", profileId))
     },
     async srsUpsert(item: SrsItem, profileId?: string | null) {
       if (typeof window === "undefined") return
-      const key = scopedKey("srs.items", profileId ?? undefined)
-      try {
-        const raw = localStorage.getItem(key)
-        const map: Record<string, SrsItem> = raw ? JSON.parse(raw) : {}
-        map[item.key] = item
-        localStorage.setItem(key, JSON.stringify(map))
-      } catch {}
+      const key = scopedKey("srs.items", profileId)
+      const map = readSrs(key)
+      map[item.key] = item
+      localStorage.setItem(key, JSON.stringify(map))
     },
     async srsRemove(srsKey: string, profileId?: string | null) {
       if (typeof window === "undefined") return
-      const key = scopedKey("srs.items", profileId ?? undefined)
-      try {
-        const raw = localStorage.getItem(key)
-        const map: Record<string, SrsItem> = raw ? JSON.parse(raw) : {}
-        delete map[srsKey]
-        localStorage.setItem(key, JSON.stringify(map))
-      } catch {}
+      const key = scopedKey("srs.items", profileId)
+      const map = readSrs(key)
+      delete map[srsKey]
+      localStorage.setItem(key, JSON.stringify(map))
     },
     async profilesLoad() {
       if (typeof window === "undefined") return []
-      try {
-        const raw = localStorage.getItem('profile.list')
-        return raw ? (JSON.parse(raw) as Profile[]) : []
-      } catch { return [] }
+      return readArray<Profile>("profile.list")
     },
     async profilesSave(list: Profile[]) {
       if (typeof window === "undefined") return
-      try { localStorage.setItem('profile.list', JSON.stringify(list)) } catch {}
+      localStorage.setItem("profile.list", JSON.stringify(list))
     },
     async profilesGetCurrent() {
       if (typeof window === "undefined") return null
-      try { return localStorage.getItem('profile.current') } catch { return null }
+      return localStorage.getItem("profile.current")
     },
     async profilesSetCurrent(id: string) {
       if (typeof window === "undefined") return
-      try { localStorage.setItem('profile.current', id) } catch {}
+      localStorage.setItem("profile.current", id)
     },
     async settingsGet(key: string, profileId?: string | null) {
       if (typeof window === "undefined") return null
-      try { return localStorage.getItem(scopedKey(key, profileId ?? undefined)) } catch { return null }
+      return localStorage.getItem(scopedKey(key, profileId))
     },
     async settingsSet(key: string, value: string, profileId?: string | null) {
       if (typeof window === "undefined") return
-      try { localStorage.setItem(scopedKey(key, profileId ?? undefined), value) } catch {}
+      localStorage.setItem(scopedKey(key, profileId), value)
     },
   }
 }

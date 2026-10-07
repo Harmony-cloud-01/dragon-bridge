@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -8,30 +8,72 @@ import { useSrs } from "@/hooks/use-srs"
 import { useDialect } from "@/hooks/use-dialect"
 import { useI18n } from "./i18n-provider"
 import { Volume2, Clock, Inbox } from 'lucide-react'
-import { logEvent } from "@/utils/activity-log"
 
 export function ReviewSRS() {
   const { dueItems, gradeItem, allItems } = useSrs()
   const { t } = useI18n()
   const { playPronunciation, isPlaying, currentlyPlaying } = useDialect()
-  const [idx, setIdx] = useState(0)
+  const [reviewedKeys, setReviewedKeys] = useState<string[]>([])
+  const reviewedKeysRef = useRef<string[]>([])
+  const [isGrading, setIsGrading] = useState(false)
+  const gradingRequest = useRef<object | null>(null)
+  const mounted = useRef(false)
+  const profileVersion = useRef(0)
+  const renderedProfileVersion = profileVersion.current
 
-  const queue = dueItems
-  const current = queue[idx]
+  useEffect(() => {
+    mounted.current = true
+    const onProfileChange = () => {
+      profileVersion.current++
+      gradingRequest.current = null
+      reviewedKeysRef.current = []
+      setReviewedKeys([])
+      setIsGrading(false)
+    }
+    window.addEventListener("profile:changed", onProfileChange)
+    return () => {
+      mounted.current = false
+      gradingRequest.current = null
+      window.removeEventListener("profile:changed", onProfileChange)
+    }
+  }, [])
+
+  useEffect(() => {
+    // Keep committed cards hidden while the asynchronous storage reload catches
+    // up, then forget them so they can appear again at their next due date.
+    const stillDue = reviewedKeys.filter(key => dueItems.some(item => item.key === key))
+    if (stillDue.length !== reviewedKeys.length) {
+      reviewedKeysRef.current = stillDue
+      setReviewedKeys(stillDue)
+    }
+  }, [dueItems, reviewedKeys])
+
+  const queue = dueItems.filter(item => !reviewedKeys.includes(item.key))
+  const current = queue[0]
 
   const onPlay = async () => {
     if (!current) return
-    logEvent({ type: "audio.play", text: current.text, t: Date.now() })
     await playPronunciation(current.text)
   }
 
-  const onGrade = (grade: "again" | "hard" | "good" | "easy") => {
-    if (!current) return
-    gradeItem(current.key, grade)
-    logEvent({ type: "srs.grade", key: current.key, grade, t: Date.now() })
-    const nextIndex = idx + 1
-    if (nextIndex < queue.length) setIdx(nextIndex)
-    else setIdx(0)
+  const onGrade = async (grade: "again" | "hard" | "good" | "easy") => {
+    if (!current || !mounted.current || gradingRequest.current || reviewedKeysRef.current.includes(current.key) || renderedProfileVersion !== profileVersion.current) return
+    // A ref closes the gap before React renders the disabled buttons.
+    const request = {}
+    gradingRequest.current = request
+    setIsGrading(true)
+    try {
+      const saved = await gradeItem(current.key, grade)
+      if (!mounted.current || gradingRequest.current !== request || !saved) return
+      reviewedKeysRef.current = [...reviewedKeysRef.current, current.key]
+      setReviewedKeys(reviewedKeysRef.current)
+    } finally {
+      // An old profile's completion must not unlock a newer review request.
+      if (mounted.current && gradingRequest.current === request) {
+        gradingRequest.current = null
+        setIsGrading(false)
+      }
+    }
   }
 
   return (
@@ -66,10 +108,10 @@ export function ReviewSRS() {
               </div>
 
               <div className="grid grid-cols-4 gap-2">
-                <Button onClick={() => onGrade("again")} variant="outline">Again</Button>
-                <Button onClick={() => onGrade("hard")} variant="outline">Hard</Button>
-                <Button onClick={() => onGrade("good")} className="bg-emerald-600 hover:bg-emerald-700">Good</Button>
-                <Button onClick={() => onGrade("easy")} variant="outline">Easy</Button>
+                <Button onClick={() => onGrade("again")} disabled={isGrading} variant="outline">Again</Button>
+                <Button onClick={() => onGrade("hard")} disabled={isGrading} variant="outline">Hard</Button>
+                <Button onClick={() => onGrade("good")} disabled={isGrading} className="bg-emerald-600 hover:bg-emerald-700">Good</Button>
+                <Button onClick={() => onGrade("easy")} disabled={isGrading} variant="outline">Easy</Button>
               </div>
               <div className="text-center text-xs text-gray-500">
                 Tip: Good moves forward, Again moves back. Items reappear when due.

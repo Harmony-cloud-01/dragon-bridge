@@ -17,7 +17,9 @@
     "cap:open:android": "cap open android",
     "cap:build:android": "cap build android",
     "android:inject-perms": "node scripts/android/inject_permissions.mjs",
-    "android:assemble": "cd android && ./gradlew assembleRelease"
+    "android:assemble": "cd android && ./gradlew assembleRelease",
+    "test": "node --experimental-vm-modules --test tests/*.test.mjs",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@capacitor/core": "^6.1.0",

@@ -44,8 +44,10 @@ This guide shows the fastest way to try the app, learn with lessons, practice to
 
 ## Prefer Local Audio (optional)
 - Toggle in Settings or in Tone Drills.
-- If enabled and audio files exist in `public/audio/<dialect>/`, the app plays them before TTS.
-- Offline: the app always prefers local audio when available.
+- If enabled and a recording is mapped in `public/lessons.json`, the app tries it before TTS.
+- This checkout includes an empty recording catalogue and no bundled recordings. The toggle does not download audio.
+- Offline playback requires a listed recording that is available on the device. Otherwise the app reports unavailable audio.
+- See [Pronunciation playback and verification](audio-playback.md) for limits and release checks.
 
 ## Admin: Lesson Library
 - Default library file: `public/lessons.library.json` (pre‑seeded).
@@ -68,6 +70,6 @@ This guide shows the fastest way to try the app, learn with lessons, practice to
 ## Troubleshooting
 - Lessons are empty: reset tag filter; Settings → Library & Cache → “Use default library”.
 - SRS not updating: try adding again; Review shows due now. Settings → SRS viewer should reflect changes live.
-- No audio on mobile: tap a Play button (mobile browsers require interaction). Consider enabling local audio.
+- No audio on mobile: tap a Play button. If the browser blocks playback, tap again; if audio is unavailable, check browser speech support or supply a verified recording and catalogue entry. Enabling local audio alone does not add recordings.
 - Cache issues: Settings → Library & Cache → Clear override and loader cache; hard refresh the PWA.
 

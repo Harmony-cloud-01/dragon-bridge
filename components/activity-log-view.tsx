@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { getStorage } from "@/storage"
+import { readEvents, clearEvents } from "@/utils/activity-log"
+import { reportStorageFailure } from "@/storage/failure"
+import { currentProfileId } from "@/storage"
 import type { ActivityEvent } from "@/utils/activity-log"
 
 function ts(t: number) {
@@ -17,9 +19,11 @@ export function ActivityLogView() {
   const load = async () => {
     setLoading(true)
     try {
-      const eng = await getStorage()
-      const list = await eng.readEvents(null)
-      setEvents(list)
+      const profile = currentProfileId()
+      const list = await readEvents(profile)
+      if (profile === currentProfileId()) setEvents(list)
+    } catch {
+      reportStorageFailure("load activity")
     } finally {
       setLoading(false)
     }
@@ -29,15 +33,19 @@ export function ActivityLogView() {
     load()
     const onUpd = () => load()
     window.addEventListener("activity:updated", onUpd as any)
-    return () => window.removeEventListener("activity:updated", onUpd as any)
+    const onProfile = () => { setEvents([]); void load() }
+    window.addEventListener("profile:changed", onProfile)
+    return () => {
+      window.removeEventListener("activity:updated", onUpd as any)
+      window.removeEventListener("profile:changed", onProfile)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const clear = async () => {
     setLoading(true)
     try {
-      const eng = await getStorage()
-      await eng.clearEvents(null)
+      if (!(await clearEvents())) return
       await load()
     } finally {
       setLoading(false)

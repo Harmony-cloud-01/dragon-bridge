@@ -14,17 +14,18 @@ import {
   useContext,
   useState,
   useCallback,
-  useRef,
   useEffect,
   useMemo,
 } from "react"
 import { useToast } from "@/hooks/use-toast"
 import { logEvent } from "@/utils/activity-log"
+import { reportStorageFailure } from "@/storage/failure"
 import { scopedKey } from "@/utils/profile-storage"
 import { isOffline } from "@/utils/offline"
 import { findAudioFor, preloadLessons } from "@/utils/lessons"
 import { getPreferLocalAudio } from "@/stores/settings"
 import { analyzeTones } from "@/lib/tones"
+import { createPronunciationPlayer, getBrowserSpeech } from "@/lib/pronunciation-player"
 
 export interface DialectInfo {
   name: string
@@ -117,7 +118,6 @@ export function DialectProvider({ children }: DialectProviderProps) {
   const { toast } = useToast()
 
   const [speechSupported, setSpeechSupported] = useState(false)
-  const [isMobile, setIsMobile] = useState(false)
 
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentlyPlaying, setCurrentlyPlaying] = useState<string | null>(null)
@@ -127,27 +127,23 @@ export function DialectProvider({ children }: DialectProviderProps) {
   const [preferredVoiceName, setPreferredVoiceName] = useState<string | null>(null)
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([])
 
-  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null)
-  const audioElRef = useRef<HTMLAudioElement | null>(null)
-
   useEffect(() => {
-    const supported = typeof window !== "undefined" && "speechSynthesis" in window
-    setSpeechSupported(supported)
-    setIsMobile(/Mobi|Android/i.test(navigator.userAgent))
+    setSpeechSupported(Boolean(getBrowserSpeech()))
     // Warm lessons cache for offline mapping
     preloadLessons()
   }, [])
 
   useEffect(() => {
-    if (!speechSupported) return
+    const speech = getBrowserSpeech()
+    if (!speech) return
     const loadVoices = debounce(() => {
-      const list = speechSynthesis.getVoices()
+      const list = speech.getVoices()
       if (list?.length) setVoices(list)
     }, 500)
     loadVoices()
-    speechSynthesis.addEventListener("voiceschanged", loadVoices)
+    speech.addEventListener("voiceschanged", loadVoices)
     return () => {
-      speechSynthesis.removeEventListener("voiceschanged", loadVoices)
+      speech.removeEventListener("voiceschanged", loadVoices)
       loadVoices.cancel()
     }
   }, [speechSupported])
@@ -158,7 +154,8 @@ export function DialectProvider({ children }: DialectProviderProps) {
       try {
         const item = localStorage.getItem(scopedKey(key))
         if (item) {
-          const parsed = JSON.parse(item)
+          let parsed: any
+          try { parsed = JSON.parse(item) } catch { parsed = item }
           if (validate(parsed)) return parsed
         }
       } catch {}
@@ -178,33 +175,57 @@ export function DialectProvider({ children }: DialectProviderProps) {
 
   useEffect(() => {
     if (typeof window === "undefined") return
-    localStorage.setItem(scopedKey(BASE_SELECTED_DIALECTS), JSON.stringify(selectedDialects))
+    try {
+      localStorage.setItem(scopedKey(BASE_SELECTED_DIALECTS), JSON.stringify(selectedDialects))
+    } catch { reportStorageFailure("save selected dialects") }
   }, [selectedDialects])
 
   useEffect(() => {
     if (typeof window === "undefined") return
-    localStorage.setItem(scopedKey(BASE_PLAYBACK_RATE), String(playbackRate))
+    try {
+      localStorage.setItem(scopedKey(BASE_PLAYBACK_RATE), String(playbackRate))
+    } catch { reportStorageFailure("save playback speed") }
   }, [playbackRate])
 
   useEffect(() => {
     if (typeof window === "undefined") return
-    preferredVoiceName
-      ? localStorage.setItem(scopedKey(BASE_PREFERRED_VOICE), preferredVoiceName)
-      : localStorage.removeItem(scopedKey(BASE_PREFERRED_VOICE))
+    try {
+      preferredVoiceName
+        ? localStorage.setItem(scopedKey(BASE_PREFERRED_VOICE), preferredVoiceName)
+        : localStorage.removeItem(scopedKey(BASE_PREFERRED_VOICE))
+    } catch { reportStorageFailure("save preferred voice") }
   }, [preferredVoiceName])
 
-  const stopAudio = useCallback(() => {
-    speechSynthesis.cancel()
-    if (audioElRef.current) {
-      audioElRef.current.pause()
-      audioElRef.current.currentTime = 0
-      audioElRef.current = null
-    }
-    setIsPlaying(false)
-    setCurrentlyPlaying(null)
-    setCurrentDialect(null)
-    utteranceRef.current = null
-  }, [])
+  const player = useMemo(() => createPronunciationPlayer({
+    getSpeech: getBrowserSpeech,
+    createUtterance: (text) => new window.SpeechSynthesisUtterance(text),
+    createAudio: (src) => new Audio(src),
+    findAudio: findAudioFor,
+    onState: (state) => {
+      setIsPlaying(Boolean(state))
+      setCurrentlyPlaying(state?.text ?? null)
+      setCurrentDialect(state?.dialectCode ?? null)
+    },
+    onUnavailable: (reason) => {
+      toast(reason === "not-allowed"
+        ? { title: "Tap to play", description: "Your browser blocked audio. Tap Play to try again." }
+        : { title: "Audio unavailable", description: reason === "no-recording"
+          ? "No recording is available for this phrase. Browser speech is unavailable or offline."
+          : "The recording could not be played. It may be missing or unavailable offline." })
+    },
+    onStarted: (text, dialectCode, element) => {
+      logEvent({ type: "audio.play", text, dialect: dialectCode, t: Date.now() })
+      if (element) {
+        window.dispatchEvent(new CustomEvent("tone:audio", { detail: { text, dialectCode, element } }))
+      }
+    },
+  }), [toast])
+
+  const stopAudio = useCallback(() => player.stop(), [player])
+
+  useEffect(() => {
+    return () => player.stop()
+  }, [player])
 
   const findBestVoice = useCallback(
     (dialectCode: string) => {
@@ -233,152 +254,40 @@ export function DialectProvider({ children }: DialectProviderProps) {
     [voices, speechSupported, preferredVoiceName]
   )
 
-  const getBakedAudioPath = useCallback((text: string, dialectCode: string) => {
-    return `/audio/${dialectCode}/${encodeURIComponent(text)}.mp3`
-  }, [])
-
-  const playWithAudioTag = useCallback(
-    async (text: string, dialectCode: string) => {
-      const src = getBakedAudioPath(text, dialectCode)
-      stopAudio()
-      const audio = new Audio(src)
-      audioElRef.current = audio
-      audio.onerror = () => {
-        stopAudio()
-        toast({ title: "Audio unavailable", description: "No recording available for this phrase" })
-      }
-      audio.onended = () => stopAudio()
-      setIsPlaying(true)
-      setCurrentlyPlaying(text)
-      setCurrentDialect(dialectCode)
-      logEvent({ type: "audio.play", text, dialect: dialectCode, t: Date.now() })
-      try {
-        await audio.play()
-        try { window.dispatchEvent(new CustomEvent("tone:audio", { detail: { text, dialectCode, element: audio } })) } catch {}
-      } catch (err) {
-        stopAudio()
-        if (isMobile) {
-          toast({ title: "Tap to play", description: "Mobile requires direct interaction" })
-        }
-      }
-    },
-    [getBakedAudioPath, isMobile, stopAudio, toast]
-  )
+  const playbackOptions = useCallback((dialectCode: string) => ({
+    offline: isOffline(),
+    preferLocal: getPreferLocalAudio(),
+    rate: playbackRate,
+    voice: findBestVoice(dialectCode),
+  }), [findBestVoice, playbackRate])
 
   const playPronunciation = useCallback(
     async (text: string, dialectCode = "zh-CN") => {
-      if (isMobile) {
-        toast({ title: "Tap speaker icon", description: "Mobile requires direct interaction" })
-        return
-      }
-      stopAudio()
-      // Prefer baked audio when offline or when user opted to prefer local audio
-      if (isOffline()) {
-        const url = await findAudioFor(text, dialectCode)
-        if (url) {
-          // temporarily override path-based player to use explicit URL
-          stopAudio()
-          const audio = new Audio(url)
-          audioElRef.current = audio
-          audio.onerror = () => {
-            stopAudio()
-            toast({ title: "Audio unavailable", description: "No recording available for this phrase" })
-          }
-          audio.onended = () => stopAudio()
-          setIsPlaying(true)
-          setCurrentlyPlaying(text)
-          setCurrentDialect(dialectCode)
-          logEvent({ type: "audio.play", text, dialect: dialectCode, t: Date.now() })
-          try { await audio.play(); try { window.dispatchEvent(new CustomEvent("tone:audio", { detail: { text, dialectCode, element: audio } })) } catch {} } catch { stopAudio() }
-          return
-        } else {
-          toast({ title: "Offline", description: "Audio not cached for this phrase" })
-          return
-        }
-      } else if (getPreferLocalAudio()) {
-        const url = await findAudioFor(text, dialectCode)
-        if (url) {
-          stopAudio()
-          const audio = new Audio(url)
-          audioElRef.current = audio
-          audio.onerror = () => {
-            stopAudio()
-            toast({ title: "Audio unavailable", description: "No recording available for this phrase" })
-          }
-          audio.onended = () => stopAudio()
-          setIsPlaying(true)
-          setCurrentlyPlaying(text)
-          setCurrentDialect(dialectCode)
-          logEvent({ type: "audio.play", text, dialect: dialectCode, t: Date.now() })
-          try { await audio.play(); try { window.dispatchEvent(new CustomEvent("tone:audio", { detail: { text, dialectCode, element: audio } })) } catch {} } catch { stopAudio() }
-          return
-        }
-      }
-      if (!speechSupported) return playWithAudioTag(text, dialectCode)
-      setIsPlaying(true)
-      setCurrentlyPlaying(text)
-      setCurrentDialect(dialectCode)
-      const utterance = new SpeechSynthesisUtterance(text)
-      utteranceRef.current = utterance
-      utterance.lang = dialectCode
-      utterance.rate = playbackRate
-      utterance.pitch = dialectCode.includes("northeast") ? 1.1 : 1.0
-      const voice = findBestVoice(dialectCode)
-      if (voice) utterance.voice = voice
-      utterance.onend = () => stopAudio()
-      utterance.onerror = () => {
-        stopAudio()
-        playWithAudioTag(text, dialectCode)
-      }
-      logEvent({ type: "audio.play", text, dialect: dialectCode, t: Date.now() })
-      speechSynthesis.speak(utterance)
+      await player.play(text, dialectCode, playbackOptions(dialectCode)).started
     },
-    [findBestVoice, isMobile, playbackRate, playWithAudioTag, speechSupported, stopAudio, toast]
+    [player, playbackOptions]
   )
 
   const playBothDialects = useCallback(
     async (text: string, primaryDialect: string) => {
-      await playPronunciation(text, "zh-CN")
-      const waitForEnd = () =>
-        new Promise<void>((resolve) => {
-          const current = utteranceRef.current
-          if (!current) return resolve()
-          
-const prevOnEnd = current.onend
-current.onend = function(e: SpeechSynthesisEvent) {
-  prevOnEnd?.call(this, e)
-  resolve()
-}
-
-const prevOnErr = current.onerror
-current.onerror = function(e: SpeechSynthesisErrorEvent) {
-  prevOnErr?.call(this, e)
-  resolve()
-}
-
-        })
-      await waitForEnd()
-      if (primaryDialect !== "zh-CN") {
-        await playPronunciation(text, primaryDialect)
-      }
+      await player.playBoth(text, primaryDialect, playbackOptions)
     },
-    [playPronunciation]
+    [player, playbackOptions]
   )
 
   const playWithToneDisplay = useCallback(
     async (text: string, dialectCode = "zh-CN") => {
-      // Start analysis first, then play, then emit results
       const analysisPromise = analyzeTones(text).catch(() => null)
-      await playPronunciation(text, dialectCode)
+      const request = player.play(text, dialectCode, playbackOptions(dialectCode))
+      const started = await request.started
       const analysis = await analysisPromise
+      if (!started || !request.isCurrent()) return
       logEvent({ type: "tone.analysis", text, dialect: dialectCode, t: Date.now() })
-      try {
-        if (analysis) {
-          window.dispatchEvent(new CustomEvent("tone:analysis", { detail: { text, dialectCode, analysis } }))
-        }
-      } catch {}
+      if (analysis) {
+        window.dispatchEvent(new CustomEvent("tone:analysis", { detail: { text, dialectCode, analysis } }))
+      }
     },
-    [playPronunciation]
+    [player, playbackOptions]
   )
 
   const contextValue = useMemo(

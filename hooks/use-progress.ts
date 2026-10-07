@@ -1,7 +1,9 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { readEvents } from "@/utils/activity-log"
+import { currentProfileId } from "@/storage"
+import { reportStorageFailure } from "@/storage/failure"
 import { useSrs } from "@/hooks/use-srs"
 
 type Progress = {
@@ -57,27 +59,33 @@ export function useProgress() {
     level: "Beginner",
   })
 
-  const compute = useCallback(() => {
-    const events = readEvents()
-    const gradeEvents = events.filter((e) => e.type === "srs.grade") as any[]
-    const playEvents = events.filter((e) => e.type === "audio.play") as any[]
-    // Words learned: combine SRS items and unique text you've practiced
-    const srsCount = allItems.length
-    const uniquePlayed = new Set(playEvents.map((e) => e.text)).size
-    const wordsLearned = Math.max(srsCount, uniquePlayed)
+  const requestRef = useRef(0)
+  const compute = useCallback(async () => {
+    const request = ++requestRef.current
+    const profile = currentProfileId()
+    try {
+      const events = await readEvents(profile)
+      if (request !== requestRef.current || profile !== currentProfileId()) return
+      const gradeEvents = events.filter((e) => e.type === "srs.grade") as any[]
+      const playEvents = events.filter((e) => e.type === "audio.play") as any[]
+      // Words learned: combine SRS items and unique text you've practiced
+      const srsCount = allItems.length
+      const uniquePlayed = new Set(playEvents.map((e) => e.text)).size
+      const wordsLearned = Math.max(srsCount, uniquePlayed)
 
-    // Accuracy: correct grades / total grades
-    const correct = gradeEvents.filter((g) => g.grade === "good" || g.grade === "easy").length
-    const total = gradeEvents.length
-    const accuracy = total > 0 ? Math.round((correct / total) * 100) : 0
+      // Accuracy: correct grades / total grades
+      const correct = gradeEvents.filter((g) => g.grade === "good" || g.grade === "easy").length
+      const total = gradeEvents.length
+      const accuracy = total > 0 ? Math.round((correct / total) * 100) : 0
 
-    // Streak: any activity (audio.play or srs.grade/srs.add) on a day counts
-    const activityDays = events.map((e) => (e as any).t).filter(Boolean) as number[]
-    const streak = calcStreak(activityDays)
+      // Streak: any activity (audio.play or srs.grade/srs.add) on a day counts
+      const activityDays = events.map((e) => (e as any).t).filter(Boolean) as number[]
+      const streak = calcStreak(activityDays)
 
-    const level = levelFromLearned(wordsLearned)
+      const level = levelFromLearned(wordsLearned)
 
-    setProgress({ wordsLearned, accuracy, streak, level })
+      setProgress({ wordsLearned, accuracy, streak, level })
+    } catch { if (request === requestRef.current) reportStorageFailure("load progress") }
   }, [allItems])
 
   useEffect(() => {
@@ -92,11 +100,14 @@ export function useProgress() {
       if (e.key.includes("activity.logs") || e.key.includes("srs.items")) compute()
     }
     if (typeof window !== "undefined") {
+      window.addEventListener("profile:changed", onActivity)
       window.addEventListener("activity:updated", onActivity as any)
       window.addEventListener("storage", onStorage)
     }
     return () => {
       if (typeof window !== "undefined") {
+        requestRef.current++
+        window.removeEventListener("profile:changed", onActivity)
         window.removeEventListener("activity:updated", onActivity as any)
         window.removeEventListener("storage", onStorage)
       }
